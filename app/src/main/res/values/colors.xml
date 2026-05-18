@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="water_primary">#2196F3</color>
+    <color name="water_primary_dark">#1565C0</color>
+    <color name="water_light">#BBDEFB</color>
+    <color name="water_accent">#03A9F4</color>
+    <color name="bubble_bg_color">#CC2196F3</color>
+    <color name="count_badge_color">#FF5252</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>
