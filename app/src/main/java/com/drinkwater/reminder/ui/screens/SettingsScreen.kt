@@ -5,7 +5,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,7 +42,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            Icons.Filled.ArrowBack,
                             contentDescription = "返回",
                             tint = White
                         )
@@ -75,7 +74,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                     subtitle = "每 ${interval} 分钟提醒一次",
                     onClick = { showIntervalPicker = true }
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
                     icon = Icons.Default.Notifications,
                     title = "震动提醒",
@@ -119,7 +118,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                     subtitle = quietStart,
                     onClick = { showQuietStartPicker = true }
                 )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
                     icon = Icons.Default.WbSunny,
                     title = "结束时间",
