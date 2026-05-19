@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -223,44 +224,48 @@ private fun PrecipChart(data: List<HourlyPrecip>) {
                 val barW = (w / barCount) * 0.6f
                 val gap = (w / barCount) * 0.4f
 
-                data.forEachIndexed { i, item ->
-                    val barH = (item.precip / maxPrecip * h * 0.85f).toFloat()
-                    val x = i * (barW + gap) + gap / 2
-                    val y = h - barH
+                drawIntoCanvas { canvas ->
+                    val nativeCanvas = canvas.nativeCanvas
 
-                    // Bar
-                    drawRect(
-                        color = if (item.precip > 0) blueBar else lightBar,
-                        topLeft = Offset(x, y),
-                        size = androidx.compose.ui.geometry.Size(barW, barH)
-                    )
+                    data.forEachIndexed { i, item ->
+                        val barH = (item.precip / maxPrecip * h * 0.85f).toFloat()
+                        val x = i * (barW + gap) + gap / 2
+                        val y = h - barH
 
-                    // Hour label (every 3 hours)
-                    if (item.hour % 3 == 0) {
-                        drawContext.canvas.nativeCanvas.drawText(
-                            "${item.hour}时",
-                            x + barW / 2,
-                            h + 14f,
-                            android.graphics.Paint().apply {
-                                color = android.graphics.Color.GRAY
-                                textSize = 22f
-                                textAlign = android.graphics.Paint.Align.CENTER
-                            }
+                        // Bar
+                        drawRect(
+                            color = if (item.precip > 0) blueBar else lightBar,
+                            topLeft = Offset(x, y),
+                            size = androidx.compose.ui.geometry.Size(barW, barH)
                         )
-                    }
 
-                    // Rain probability
-                    if (item.prob > 30) {
-                        drawContext.canvas.nativeCanvas.drawText(
-                            "${item.prob}%",
-                            x + barW / 2,
-                            y - 4f,
-                            android.graphics.Paint().apply {
-                                color = android.graphics.Color.parseColor("#1976D2")
-                                textSize = 20f
-                                textAlign = android.graphics.Paint.Align.CENTER
-                            }
-                        )
+                        // Hour label (every 3 hours)
+                        if (item.hour % 3 == 0) {
+                            nativeCanvas.drawText(
+                                "${item.hour}时",
+                                x + barW / 2,
+                                h + 14f,
+                                android.graphics.Paint().apply {
+                                    color = android.graphics.Color.GRAY
+                                    textSize = 22f
+                                    textAlign = android.graphics.Paint.Align.CENTER
+                                }
+                            )
+                        }
+
+                        // Rain probability
+                        if (item.prob > 30) {
+                            nativeCanvas.drawText(
+                                "${item.prob}%",
+                                x + barW / 2,
+                                y - 4f,
+                                android.graphics.Paint().apply {
+                                    color = android.graphics.Color.parseColor("#1976D2")
+                                    textSize = 20f
+                                    textAlign = android.graphics.Paint.Align.CENTER
+                                }
+                            )
+                        }
                     }
                 }
             }

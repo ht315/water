@@ -6,7 +6,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
-import android.os.PowerManager
+import android.provider.Settings
 import android.view.*
 import android.widget.*
 import androidx.core.app.NotificationCompat
@@ -61,11 +61,6 @@ class SleepLockOverlayService : Service() {
     override fun onDestroy() {
         removeOverlay()
         super.onDestroy()
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Not directly called for overlay views; handle via dispatchKeyEvent
-        return super.onKeyDown(keyCode, event)
     }
 
     private fun showOverlay() {
