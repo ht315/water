@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
+import com.drinkwater.reminder.util.NotificationHelper
 import com.drinkwater.reminder.util.SedentaryReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,6 +102,22 @@ fun SedentaryConfigScreen(onNavigateBack: () -> Unit) {
                                 checkedTrackColor = Blue700
                             )
                         )
+                    }
+                )
+            }
+
+            SectionTitle("测试")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.NotificationsActive,
+                    title = "发送测试久坐提醒",
+                    subtitle = "点击立即发送一条久坐提醒",
+                    onClick = {
+                        val interval = prefs.getSedentaryInterval()
+                        val vibrate = prefs.isSedentaryVibrateEnabled()
+                        NotificationHelper.sendSedentaryReminder(context, interval, vibrate)
+                        android.widget.Toast.makeText(context, "已发送，请查看通知栏", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 )
             }
