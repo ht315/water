@@ -56,13 +56,16 @@ object UpdateHelper {
     fun downloadAndInstall(context: Context, url: String, fileName: String) {
         runOnUiThread { Toast.makeText(context, "开始下载...", Toast.LENGTH_SHORT).show() }
         Thread {
-            // Try direct first, then proxy
-            val urls = listOf(url, "https://ghproxy.com/$url")
+            // Try multiple proxies until one works
+            val proxies = listOf("", "https://ghproxy.com/", "https://gh.con.sh/", "https://mirror.ghproxy.com/", "https://gh.api.99988866.xyz/")
+            val urls = proxies.map { if (it.isEmpty()) url else "$it$url" }
+            val labels = listOf("直连", "ghproxy", "gh.con.sh", "mirror.ghproxy", "99988866")
             for ((i, tryUrl) in urls.withIndex()) {
-                if (i > 0) runOnUiThread { Toast.makeText(context, "直连失败，切换镜像...", Toast.LENGTH_SHORT).show() }
+                val label = labels.getOrElse(i) { "镜像$i" }
+                if (i > 0) runOnUiThread { Toast.makeText(context, "切换$label...", Toast.LENGTH_SHORT).show() }
                 if (tryDownload(context, tryUrl, fileName)) return@Thread
             }
-            runOnUiThread { Toast.makeText(context, "下载失败，请检查网络", Toast.LENGTH_LONG).show() }
+            runOnUiThread { Toast.makeText(context, "所有线路失败，请检查网络", Toast.LENGTH_LONG).show() }
         }.start()
     }
 
