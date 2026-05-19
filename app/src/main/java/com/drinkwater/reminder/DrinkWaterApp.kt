@@ -23,11 +23,12 @@ class DrinkWaterApp : Application() {
         super.onCreate()
         createNotificationChannels()
 
-        // Register screen unlock listener — works while app process is alive
-        registerReceiver(
-            screenUnlockReceiver,
-            IntentFilter(Intent.ACTION_USER_PRESENT)
-        )
+        // Register screen unlock listener — both triggers for max reliability
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_USER_PRESENT)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        registerReceiver(screenUnlockReceiver, filter)
     }
 
     override fun onTerminate() {

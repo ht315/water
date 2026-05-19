@@ -8,7 +8,8 @@ import com.drinkwater.reminder.ui.screens.ShiftSelectionActivity
 
 class ScreenUnlockReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_USER_PRESENT) return
+        val action = intent.action
+        if (action != Intent.ACTION_USER_PRESENT && action != Intent.ACTION_SCREEN_ON) return
 
         val prefs = PreferencesManager(context)
         if (!prefs.isAttendanceModuleEnabled()) return
