@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
-import com.drinkwater.reminder.service.ReminderGuardService
 import com.drinkwater.reminder.util.NotificationHelper
 import com.drinkwater.reminder.util.PermissionHelper
 import com.drinkwater.reminder.util.WaterReminderScheduler
@@ -34,7 +33,6 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
     var vibrate by remember { mutableStateOf(prefs.isVibrateEnabled()) }
     var bandVibrate by remember { mutableStateOf(prefs.isBandVibrateEnabled()) }
     var waterPopup by remember { mutableStateOf(prefs.isWaterPopupEnabled()) }
-    var guardService by remember { mutableStateOf(prefs.isGuardServiceEnabled()) }
 
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showGoalPicker by remember { mutableStateOf(false) }
@@ -161,32 +159,6 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
                     title = "每日目标",
                     subtitle = "每天喝 ${dailyGoal} 杯水",
                     onClick = { showGoalPicker = true }
-                )
-            }
-
-            SectionTitle("强杀保护")
-
-            SettingsCard {
-                SettingsRow(
-                    icon = Icons.Default.Shield,
-                    title = "后台保护服务",
-                    subtitle = if (guardService) "已开启（通知栏常驻，防止被杀）" else "已关闭",
-                    onClick = { },
-                    trailing = {
-                        Switch(
-                            checked = guardService,
-                            onCheckedChange = {
-                                guardService = it
-                                prefs.setGuardServiceEnabled(it)
-                                if (it) ReminderGuardService.start(context)
-                                else ReminderGuardService.stop(context)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = White,
-                                checkedTrackColor = Orange500
-                            )
-                        )
-                    }
                 )
             }
 
