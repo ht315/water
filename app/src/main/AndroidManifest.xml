@@ -60,6 +60,11 @@
             android:exported="false"
             android:foregroundServiceType="specialUse" />
 
+        <service
+            android:name=".service.ReminderGuardService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
         <receiver
             android:name=".receiver.ScreenUnlockReceiver"
             android:exported="false">

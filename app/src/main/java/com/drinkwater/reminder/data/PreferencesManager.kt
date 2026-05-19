@@ -49,6 +49,9 @@ class PreferencesManager(context: Context) {
     fun isBandVibrateEnabled(): Boolean = prefs.getBoolean(KEY_BAND_VIBRATE, false)
     fun setBandVibrateEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_BAND_VIBRATE, enabled).apply()
 
+    fun isGuardServiceEnabled(): Boolean = prefs.getBoolean(KEY_GUARD_SERVICE, false)
+    fun setGuardServiceEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_GUARD_SERVICE, enabled).apply()
+
     // Popup reminder toggles
     fun isWaterPopupEnabled(): Boolean = prefs.getBoolean(KEY_POPUP_WATER, false)
     fun setWaterPopupEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_POPUP_WATER, enabled).apply()
@@ -209,6 +212,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_QUIET_END = "quiet_end"
         private const val KEY_VIBRATE = "vibrate"
         private const val KEY_BAND_VIBRATE = "band_vibrate"
+        private const val KEY_GUARD_SERVICE = "guard_service"
         private const val KEY_POPUP_WATER = "popup_water"
         private const val KEY_POPUP_SEDENTARY = "popup_sedentary"
         private const val KEY_POPUP_BEDTIME = "popup_bedtime"
