@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.ui.screens.ReminderPopupActivity
 import com.drinkwater.reminder.util.NotificationHelper
 import com.drinkwater.reminder.util.SedentaryReminderScheduler
 import java.util.Calendar
@@ -22,9 +23,16 @@ class SedentaryReminderAlarmReceiver : BroadcastReceiver() {
 
         if (currentMinutes in start until end) {
             NotificationHelper.sendSedentaryReminder(context, interval, vibrate)
+            if (prefs.isSedentaryPopupEnabled()) {
+                ReminderPopupActivity.show(
+                    context,
+                    "久坐提醒",
+                    "已经坐了${interval}分钟了，起来活动一下吧！",
+                    icon = "sedentary"
+                )
+            }
         }
 
-        // Re-schedule next alarm
         SedentaryReminderScheduler.schedule(context)
     }
 

@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.ui.screens.ReminderPopupActivity
 import com.drinkwater.reminder.util.NotificationHelper
 import com.drinkwater.reminder.util.WaterReminderScheduler
 import java.util.Calendar
@@ -16,9 +17,17 @@ class WaterReminderAlarmReceiver : BroadcastReceiver() {
 
         if (!isInQuietHours(prefs)) {
             NotificationHelper.sendWaterReminder(context, intervalMinutes, vibrateEnabled)
+            if (prefs.isWaterPopupEnabled()) {
+                ReminderPopupActivity.show(
+                    context,
+                    "该喝水啦！",
+                    "已经${intervalMinutes}分钟没喝水了，快喝一杯吧",
+                    actionType = "drink",
+                    icon = "water"
+                )
+            }
         }
 
-        // Schedule daily summary around 21:00
         val now = Calendar.getInstance()
         if (now.get(Calendar.HOUR_OF_DAY) == 21 && now.get(Calendar.MINUTE) in 0..20) {
             val count = prefs.getTodayDrinkCount()
@@ -26,7 +35,6 @@ class WaterReminderAlarmReceiver : BroadcastReceiver() {
             NotificationHelper.sendDailySummary(context, count, goal, vibrateEnabled)
         }
 
-        // Re-schedule next alarm
         WaterReminderScheduler.schedule(context, intervalMinutes)
     }
 

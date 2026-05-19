@@ -30,6 +30,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
     var quietEnd by remember { mutableStateOf(prefs.getQuietEnd()) }
     var vibrate by remember { mutableStateOf(prefs.isVibrateEnabled()) }
     var bandVibrate by remember { mutableStateOf(prefs.isBandVibrateEnabled()) }
+    var waterPopup by remember { mutableStateOf(prefs.isWaterPopupEnabled()) }
 
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showGoalPicker by remember { mutableStateOf(false) }
@@ -87,6 +88,26 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
                             onCheckedChange = {
                                 vibrate = it
                                 prefs.setVibrateEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.OpenInFull,
+                    title = "浮窗提醒",
+                    subtitle = if (waterPopup) "已开启（醒目弹窗）" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = waterPopup,
+                            onCheckedChange = {
+                                waterPopup = it
+                                prefs.setWaterPopupEnabled(it)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = White,

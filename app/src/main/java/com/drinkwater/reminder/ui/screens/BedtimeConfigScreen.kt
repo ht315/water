@@ -27,6 +27,7 @@ fun BedtimeConfigScreen(onNavigateBack: () -> Unit) {
     var advance by remember { mutableIntStateOf(prefs.getBedtimeAdvance()) }
     var lockEnabled by remember { mutableStateOf(prefs.isBedtimeLockEnabled()) }
     var vibrate by remember { mutableStateOf(prefs.isBedtimeVibrateEnabled()) }
+    var popup by remember { mutableStateOf(prefs.isBedtimePopupEnabled()) }
 
     var showBedtimePicker by remember { mutableStateOf(false) }
     var showWakeUpPicker by remember { mutableStateOf(false) }
@@ -137,6 +138,26 @@ fun BedtimeConfigScreen(onNavigateBack: () -> Unit) {
                             onCheckedChange = {
                                 vibrate = it
                                 prefs.setBedtimeVibrateEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.OpenInFull,
+                    title = "浮窗提醒",
+                    subtitle = if (popup) "已开启（醒目弹窗）" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = popup,
+                            onCheckedChange = {
+                                popup = it
+                                prefs.setBedtimePopupEnabled(it)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = White,

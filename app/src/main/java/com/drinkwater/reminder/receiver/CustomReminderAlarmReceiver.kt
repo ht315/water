@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.ui.screens.ReminderPopupActivity
 import com.drinkwater.reminder.util.CustomReminderScheduler
 import com.drinkwater.reminder.util.NotificationHelper
 
@@ -15,14 +16,13 @@ class CustomReminderAlarmReceiver : BroadcastReceiver() {
         val id = intent.getIntExtra("reminder_id", -1)
 
         NotificationHelper.sendCustomReminder(context, label, vibrate)
+        ReminderPopupActivity.show(context, label, "提醒时间到了", icon = "notifications")
 
-        // If one-time, disable after firing
         if (repeat == "once" && id >= 0) {
             val prefs = PreferencesManager(context)
             prefs.setCustomReminderEnabled(id, false)
         }
 
-        // Re-schedule for next occurrence
         CustomReminderScheduler.scheduleAll(context)
     }
 }

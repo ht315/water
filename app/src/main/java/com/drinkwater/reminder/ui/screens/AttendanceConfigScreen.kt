@@ -29,6 +29,7 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
     var fullStart by remember { mutableStateOf(prefs.getAttendanceFullTime()) }
     var fullEnd by remember { mutableStateOf(prefs.getAttendanceFullEndTime()) }
     var vibrate by remember { mutableStateOf(prefs.isAttendanceVibrateEnabled()) }
+    var popup by remember { mutableStateOf(prefs.isAttendancePopupEnabled()) }
 
     var showPicker by remember { mutableStateOf("") }
 
@@ -146,6 +147,26 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
                             onCheckedChange = {
                                 vibrate = it
                                 prefs.setAttendanceVibrateEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.OpenInFull,
+                    title = "浮窗提醒",
+                    subtitle = if (popup) "已开启（醒目弹窗）" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = popup,
+                            onCheckedChange = {
+                                popup = it
+                                prefs.setAttendancePopupEnabled(it)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = White,

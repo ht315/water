@@ -49,6 +49,19 @@ class PreferencesManager(context: Context) {
     fun isBandVibrateEnabled(): Boolean = prefs.getBoolean(KEY_BAND_VIBRATE, false)
     fun setBandVibrateEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_BAND_VIBRATE, enabled).apply()
 
+    // Popup reminder toggles
+    fun isWaterPopupEnabled(): Boolean = prefs.getBoolean(KEY_POPUP_WATER, false)
+    fun setWaterPopupEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_POPUP_WATER, enabled).apply()
+
+    fun isSedentaryPopupEnabled(): Boolean = prefs.getBoolean(KEY_POPUP_SEDENTARY, false)
+    fun setSedentaryPopupEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_POPUP_SEDENTARY, enabled).apply()
+
+    fun isBedtimePopupEnabled(): Boolean = prefs.getBoolean(KEY_POPUP_BEDTIME, false)
+    fun setBedtimePopupEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_POPUP_BEDTIME, enabled).apply()
+
+    fun isAttendancePopupEnabled(): Boolean = prefs.getBoolean(KEY_POPUP_ATTENDANCE, false)
+    fun setAttendancePopupEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_POPUP_ATTENDANCE, enabled).apply()
+
     // --- Module switches ---
     fun isAttendanceModuleEnabled(): Boolean = prefs.getBoolean(KEY_MODULE_ATTENDANCE, false)
     fun setAttendanceModuleEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_MODULE_ATTENDANCE, enabled).apply()
@@ -196,6 +209,10 @@ class PreferencesManager(context: Context) {
         private const val KEY_QUIET_END = "quiet_end"
         private const val KEY_VIBRATE = "vibrate"
         private const val KEY_BAND_VIBRATE = "band_vibrate"
+        private const val KEY_POPUP_WATER = "popup_water"
+        private const val KEY_POPUP_SEDENTARY = "popup_sedentary"
+        private const val KEY_POPUP_BEDTIME = "popup_bedtime"
+        private const val KEY_POPUP_ATTENDANCE = "popup_attendance"
 
         private const val KEY_MODULE_ATTENDANCE = "module_attendance_enabled"
         private const val KEY_MODULE_SEDENTARY = "module_sedentary_enabled"

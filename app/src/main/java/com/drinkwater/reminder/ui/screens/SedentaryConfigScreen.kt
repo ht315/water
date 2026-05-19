@@ -25,6 +25,7 @@ fun SedentaryConfigScreen(onNavigateBack: () -> Unit) {
     var startTime by remember { mutableStateOf(prefs.getSedentaryStart()) }
     var endTime by remember { mutableStateOf(prefs.getSedentaryEnd()) }
     var vibrate by remember { mutableStateOf(prefs.isSedentaryVibrateEnabled()) }
+    var popup by remember { mutableStateOf(prefs.isSedentaryPopupEnabled()) }
 
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showStartPicker by remember { mutableStateOf(false) }
@@ -74,6 +75,26 @@ fun SedentaryConfigScreen(onNavigateBack: () -> Unit) {
                             onCheckedChange = {
                                 vibrate = it
                                 prefs.setSedentaryVibrateEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.OpenInFull,
+                    title = "浮窗提醒",
+                    subtitle = if (popup) "已开启（醒目弹窗）" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = popup,
+                            onCheckedChange = {
+                                popup = it
+                                prefs.setSedentaryPopupEnabled(it)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = White,
