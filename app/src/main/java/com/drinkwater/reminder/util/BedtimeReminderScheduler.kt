@@ -15,30 +15,38 @@ object BedtimeReminderScheduler {
     private const val REQ_WAKEUP = 5003
 
     fun schedule(context: Context) {
-        val prefs = PreferencesManager(context)
-        if (!prefs.isBedtimeModuleEnabled()) {
-            cancel(context)
-            return
+        try {
+            val prefs = PreferencesManager(context)
+            if (!prefs.isBedtimeModuleEnabled()) {
+                cancel(context)
+                return
+            }
+
+            val bedtime = prefs.getBedtimeTime()
+            val advance = prefs.getBedtimeAdvance()
+            val wakeUp = prefs.getBedtimeWakeUpTime()
+
+            scheduleAlarm(context, bedtime, advance, REQ_BEDTIME_ADVANCE, "advance")
+            scheduleAlarm(context, bedtime, 0, REQ_BEDTIME, "bedtime")
+            scheduleAlarm(context, wakeUp, 0, REQ_WAKEUP, "wakeup")
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-
-        val bedtime = prefs.getBedtimeTime()
-        val advance = prefs.getBedtimeAdvance()
-        val wakeUp = prefs.getBedtimeWakeUpTime()
-
-        scheduleAlarm(context, bedtime, advance, REQ_BEDTIME_ADVANCE, "advance")
-        scheduleAlarm(context, bedtime, 0, REQ_BEDTIME, "bedtime")
-        scheduleAlarm(context, wakeUp, 0, REQ_WAKEUP, "wakeup")
     }
 
     fun cancel(context: Context) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        listOf(REQ_BEDTIME_ADVANCE, REQ_BEDTIME, REQ_WAKEUP).forEach { req ->
-            val intent = Intent(context, BedtimeAlarmReceiver::class.java)
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, req, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            alarmManager.cancel(pendingIntent)
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            listOf(REQ_BEDTIME_ADVANCE, REQ_BEDTIME, REQ_WAKEUP).forEach { req ->
+                val intent = Intent(context, BedtimeAlarmReceiver::class.java)
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, req, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                alarmManager.cancel(pendingIntent)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -66,8 +74,10 @@ object BedtimeReminderScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
+        // setAlarmClock is exempt from SCHEDULE_EXACT_ALARM permission on Android 12+
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+            pendingIntent
         )
     }
 }
