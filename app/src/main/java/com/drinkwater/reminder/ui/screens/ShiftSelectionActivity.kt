@@ -187,16 +187,6 @@ class ShiftSelectionActivity : ComponentActivity() {
         prefs.setTodayShiftDate(today)
         AttendanceReminderScheduler.scheduleIfNeeded(this)
 
-        // Show persistent status notification
-        if (shift != "rest" && startTime.isNotEmpty() && endTime.isNotEmpty()) {
-            prefs.setAttendanceStartDone(false)
-            prefs.setAttendanceEndDone(false)
-            NotificationHelper.showAttendanceStatus(this, label, startTime, endTime, false, false)
-        } else if (shift == "rest") {
-            NotificationHelper.cancelAttendanceStatus(this)
-        }
-
-        // Show what was set
         val label = when (shift) {
             "morning" -> "早班"
             "night" -> "晚班"
@@ -214,6 +204,15 @@ class ShiftSelectionActivity : ComponentActivity() {
             "night" -> prefs.getAttendanceNightEndTime()
             "full" -> prefs.getAttendanceFullEndTime()
             else -> ""
+        }
+
+        // Show persistent status notification
+        if (shift != "rest" && startTime.isNotEmpty() && endTime.isNotEmpty()) {
+            prefs.setAttendanceStartDone(false)
+            prefs.setAttendanceEndDone(false)
+            NotificationHelper.showAttendanceStatus(this, label, startTime, endTime, false, false)
+        } else if (shift == "rest") {
+            NotificationHelper.cancelAttendanceStatus(this)
         }
         val msg = if (shift == "rest") "今天休息，不设打卡提醒"
         else "$label：上班 $startTime / 下班 $endTime"
