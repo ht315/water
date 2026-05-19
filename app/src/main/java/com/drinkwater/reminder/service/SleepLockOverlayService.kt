@@ -121,11 +121,11 @@ class SleepLockOverlayService : Service() {
 
         val vbox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
-            addView(clockText, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(titleText, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(16) })
-            addView(hintText, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(8) })
-            addView(unlockButton, LinearLayout.LayoutParams(MATCH_PARENT, dp(52)).apply { topMargin = dp(48); leftMargin = dp(60); rightMargin = dp(60) })
-            addView(backHint, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(16) })
+            addView(clockText, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addView(titleText, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16) })
+            addView(hintText, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
+            addView(unlockButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)).apply { topMargin = dp(48); leftMargin = dp(60); rightMargin = dp(60) })
+            addView(backHint, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16) })
         }
         root.addView(vbox)
 
@@ -157,7 +157,7 @@ class SleepLockOverlayService : Service() {
         })
 
         val params = WindowManager.LayoutParams(
-            MATCH_PARENT, MATCH_PARENT, layoutType,
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, layoutType,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
             WindowManager.LayoutParams.FLAG_FULLSCREEN or

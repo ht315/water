@@ -215,57 +215,55 @@ private fun PrecipChart(data: List<HourlyPrecip>) {
         Column(modifier = Modifier.padding(8.dp)) {
             // Y-axis labels
             Text("mm", fontSize = 10.sp, color = Gray600)
-            Canvas(modifier = Modifier.fillMaxWidth().height(80.dp)) {
-                val w = size.width
-                val h = size.height
-                val barCount = data.size
-                if (barCount == 0) return@Canvas
-
-                val barW = (w / barCount) * 0.6f
-                val gap = (w / barCount) * 0.4f
-
-                drawIntoCanvas { canvas ->
-                    val nativeCanvas = canvas.nativeCanvas
-
-                    data.forEachIndexed { i, item ->
-                        val barH = (item.precip / maxPrecip * h * 0.85f).toFloat()
-                        val x = i * (barW + gap) + gap / 2
-                        val y = h - barH
-
-                        // Bar
-                        drawRect(
-                            color = if (item.precip > 0) blueBar else lightBar,
-                            topLeft = Offset(x, y),
-                            size = androidx.compose.ui.geometry.Size(barW, barH)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Chart bars
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(80.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    data.forEach { item ->
+                        val barFraction = (item.precip / maxPrecip).coerceIn(0.0, 1.0)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // Prob label
+                            if (item.prob > 30) {
+                                Text(
+                                    "${item.prob}%",
+                                    fontSize = 9.sp,
+                                    color = Blue700,
+                                    maxLines = 1
+                                )
+                            }
+                            // Bar
+                            Box(
+                                modifier = Modifier
+                                    .width(12.dp)
+                                    .height((72.dp * barFraction.toFloat()).coerceAtLeast(2.dp))
+                                    .background(
+                                        if (item.precip > 0) Blue700 else Blue200,
+                                        RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)
+                                    )
+                            )
+                        }
+                    }
+                }
+                // Hour labels
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    data.forEach { item ->
+                        Text(
+                            if (item.hour % 3 == 0) "${item.hour}时" else "",
+                            fontSize = 9.sp,
+                            color = Gray600,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
                         )
-
-                        // Hour label (every 3 hours)
-                        if (item.hour % 3 == 0) {
-                            nativeCanvas.drawText(
-                                "${item.hour}时",
-                                x + barW / 2,
-                                h + 14f,
-                                android.graphics.Paint().apply {
-                                    color = android.graphics.Color.GRAY
-                                    textSize = 22f
-                                    textAlign = android.graphics.Paint.Align.CENTER
-                                }
-                            )
-                        }
-
-                        // Rain probability
-                        if (item.prob > 30) {
-                            nativeCanvas.drawText(
-                                "${item.prob}%",
-                                x + barW / 2,
-                                y - 4f,
-                                android.graphics.Paint().apply {
-                                    color = android.graphics.Color.parseColor("#1976D2")
-                                    textSize = 20f
-                                    textAlign = android.graphics.Paint.Align.CENTER
-                                }
-                            )
-                        }
                     }
                 }
             }
