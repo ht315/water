@@ -30,7 +30,7 @@ object UpdateHelper {
             if (conn.responseCode != 200) { conn.disconnect(); return null }
 
             val json = conn.inputStream.bufferedReader().readText()
-            finalConn.disconnect()
+            conn.disconnect()
             val release = JSONObject(json)
             val name = release.getString("tag_name")
             val body = release.optString("body", "")
