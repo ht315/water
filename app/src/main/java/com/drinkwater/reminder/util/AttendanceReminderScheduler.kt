@@ -12,6 +12,7 @@ object AttendanceReminderScheduler {
 
     private const val REQ_ATTENDANCE_START = 3001
     private const val REQ_ATTENDANCE_END = 3002
+    private const val REQ_PRE_REMINDER = 3003
 
     fun scheduleIfNeeded(context: Context) {
         try {
@@ -41,6 +42,15 @@ object AttendanceReminderScheduler {
 
             scheduleOne(context, startTime, "${shiftLabel}上班", REQ_ATTENDANCE_START)
             scheduleOne(context, endTime, "${shiftLabel}下班", REQ_ATTENDANCE_END)
+
+            // Pre-reminder: 1 minute before start time
+            if (prefs.isAttendancePreReminderEnabled()) {
+                prefs.setPreCheckActive(false)
+                val parts = startTime.split(":")
+                val h = parts[0].toInt(); val m = parts[1].toInt()
+                val preTime = if (m == 0) "${(h - 1 + 24) % 24}:59" else "${h}:${(m - 1).toString().padStart(2, '0')}"
+                scheduleOne(context, preTime, "${shiftLabel}预备", REQ_PRE_REMINDER)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -49,7 +59,7 @@ object AttendanceReminderScheduler {
     fun cancelAll(context: Context) {
         try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            listOf(REQ_ATTENDANCE_START, REQ_ATTENDANCE_END).forEach { req ->
+            listOf(REQ_ATTENDANCE_START, REQ_ATTENDANCE_END, REQ_PRE_REMINDER).forEach { req ->
                 val intent = Intent(context, AttendanceAlarmReceiver::class.java)
                 val pendingIntent = PendingIntent.getBroadcast(
                     context, req, intent,

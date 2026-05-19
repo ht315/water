@@ -13,9 +13,38 @@ class ScreenUnlockReceiver : BroadcastReceiver() {
 
         val prefs = PreferencesManager(context)
         if (!prefs.isAttendanceModuleEnabled()) return
+
+        // Pre-check: 1 min before clock-in, jump directly to WeChat Work
+        if (prefs.isAttendancePreReminderEnabled() && prefs.isPreCheckActive()) {
+            val shift = prefs.getTodayShift()
+            if (shift.isNotEmpty() && shift != "rest" && !prefs.isAttendanceStartDone()) {
+                prefs.setPreCheckActive(false)
+                // Try to open WeChat Work
+                try {
+                    val wecomIntent = context.packageManager.getLaunchIntentForPackage("com.tencent.wework")
+                    if (wecomIntent != null) {
+                        wecomIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(wecomIntent)
+                        return
+                    }
+                } catch (_: Exception) {}
+                // Fallback: open DingTalk
+                try {
+                    val dtIntent = context.packageManager.getLaunchIntentForPackage("com.alibaba.android.rimet")
+                    if (dtIntent != null) {
+                        dtIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(dtIntent)
+                        return
+                    }
+                } catch (_: Exception) {}
+            }
+            prefs.setPreCheckActive(false)
+            return
+        }
+
+        // Normal shift selection popup
         if (prefs.isTodayShiftSelected()) return
 
-        // Prevent duplicate starts from manifest + programmatic registration
         val now = System.currentTimeMillis()
         if (now - lastStartTime < 2000) return
         lastStartTime = now

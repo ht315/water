@@ -119,6 +119,12 @@ class PreferencesManager(context: Context) {
     fun isWeComAutoDetectEnabled(): Boolean = prefs.getBoolean(KEY_WECOM_AUTO_DETECT, false)
     fun setWeComAutoDetectEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_WECOM_AUTO_DETECT, enabled).apply()
 
+    fun isAttendancePreReminderEnabled(): Boolean = prefs.getBoolean(KEY_ATTENDANCE_PRE_REMINDER, false)
+    fun setAttendancePreReminderEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_ATTENDANCE_PRE_REMINDER, enabled).apply()
+
+    fun isPreCheckActive(): Boolean = prefs.getBoolean(KEY_PRE_CHECK_ACTIVE, false)
+    fun setPreCheckActive(active: Boolean) = prefs.edit().putBoolean(KEY_PRE_CHECK_ACTIVE, active).apply()
+
     fun isAttendanceStartDone(): Boolean {
         if (getTodayShiftDate() != todayKey()) { setAttendanceStartDone(false); setAttendanceEndDone(false) }
         return prefs.getBoolean(KEY_ATTENDANCE_START_DONE, false)
@@ -250,6 +256,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_ATTENDANCE_START_DONE = "attendance_start_done"
         private const val KEY_ATTENDANCE_END_DONE = "attendance_end_done"
         private const val KEY_WECOM_AUTO_DETECT = "wecom_auto_detect"
+        private const val KEY_ATTENDANCE_PRE_REMINDER = "attendance_pre_reminder"
+        private const val KEY_PRE_CHECK_ACTIVE = "pre_check_active"
 
         private const val KEY_SEDENTARY_INTERVAL = "sedentary_interval"
         private const val KEY_SEDENTARY_START = "sedentary_start"

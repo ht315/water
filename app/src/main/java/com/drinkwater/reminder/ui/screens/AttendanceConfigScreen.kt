@@ -32,6 +32,7 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
     var vibrate by remember { mutableStateOf(prefs.isAttendanceVibrateEnabled()) }
     var popup by remember { mutableStateOf(prefs.isAttendancePopupEnabled()) }
     var wecomAuto by remember { mutableStateOf(prefs.isWeComAutoDetectEnabled()) }
+    var preReminder by remember { mutableStateOf(prefs.isAttendancePreReminderEnabled()) }
 
     var showPicker by remember { mutableStateOf("") }
 
@@ -143,6 +144,27 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
                             onCheckedChange = {
                                 popup = it
                                 prefs.setAttendancePopupEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.PhoneAndroid,
+                    title = "提前跳转打卡",
+                    subtitle = if (preReminder) "上班前1分钟解锁自动跳转企业微信" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = preReminder,
+                            onCheckedChange = {
+                                preReminder = it
+                                prefs.setAttendancePreReminderEnabled(it)
+                                AttendanceReminderScheduler.scheduleIfNeeded(context)
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = White,

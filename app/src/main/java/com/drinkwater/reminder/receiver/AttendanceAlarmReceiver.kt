@@ -17,6 +17,13 @@ class AttendanceAlarmReceiver : BroadcastReceiver() {
 
         val isStart = shiftLabel.contains("上班")
         val isEnd = shiftLabel.contains("下班")
+        val isPre = shiftLabel.contains("预备")
+
+        // Pre-reminder: activate pre-check flag to trigger on screen unlock
+        if (isPre) {
+            prefs.setPreCheckActive(true)
+            return
+        }
 
         // Check if already marked as done
         if (isStart && prefs.isAttendanceStartDone()) return
