@@ -18,11 +18,21 @@ class ReminderGuardService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForegroundNotification()
-        startPeriodicCheck()
+        try {
+            startForegroundNotification()
+            startPeriodicCheck()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            stopSelf()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        try {
+            startForegroundNotification()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         return START_STICKY
     }
 
@@ -67,7 +77,8 @@ class ReminderGuardService : Service() {
             .setSmallIcon(R.drawable.ic_water_drop)
             .setContentTitle("提醒助手保护中")
             .setContentText("确保提醒准时触发")
-            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSilent(true)
             .setOngoing(true)
             .setContentIntent(pi)
             .build()
