@@ -173,6 +173,7 @@ fun RemindersScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModuleCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
