@@ -107,6 +107,32 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
                 )
             }
 
+            SectionTitle("天气")
+            SettingsCard {
+                var city by remember { mutableStateOf(prefs.getAttendanceCity()) }
+                var showCityPicker by remember { mutableStateOf(false) }
+                SettingsRow(
+                    icon = Icons.Default.LocationOn,
+                    title = "默认城市",
+                    subtitle = city,
+                    onClick = { showCityPicker = true }
+                )
+                if (showCityPicker) {
+                    val cities = listOf("北京","上海","广州","深圳","杭州","南京","武汉","成都","重庆","西安","天津","苏州","长沙","郑州","济南","青岛","大连","厦门","福州","合肥","南昌","贵阳","昆明","南宁","沈阳","长春","哈尔滨","石家庄","太原")
+                    PickerDialog(
+                        title = "选择城市",
+                        options = cities,
+                        selectedIndex = cities.indexOf(city).coerceAtLeast(0),
+                        onDismiss = { showCityPicker = false },
+                        onSelect = {
+                            city = cities[it]
+                            prefs.setAttendanceCity(city)
+                            showCityPicker = false
+                        }
+                    )
+                }
+            }
+
             SectionTitle("通知设置")
             SettingsCard {
                 SettingsRow(

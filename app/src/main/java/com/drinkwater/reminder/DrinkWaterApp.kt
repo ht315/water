@@ -3,7 +3,9 @@ package com.drinkwater.reminder
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.IntentFilter
 import android.os.Build
+import com.drinkwater.reminder.receiver.ScreenUnlockReceiver
 
 class DrinkWaterApp : Application() {
     companion object {
@@ -14,9 +16,22 @@ class DrinkWaterApp : Application() {
         const val CUSTOM_CHANNEL_ID = "custom_reminder_channel"
     }
 
+    private val screenUnlockReceiver = ScreenUnlockReceiver()
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+
+        // Register screen unlock listener — works while app process is alive
+        registerReceiver(
+            screenUnlockReceiver,
+            IntentFilter(Intent.ACTION_USER_PRESENT)
+        )
+    }
+
+    override fun onTerminate() {
+        super.onTerminate()
+        try { unregisterReceiver(screenUnlockReceiver) } catch (_: Exception) {}
     }
 
     private fun createNotificationChannels() {

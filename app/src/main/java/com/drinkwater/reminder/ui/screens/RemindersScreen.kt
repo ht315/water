@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.drinkwater.reminder.data.PreferencesManager
-import com.drinkwater.reminder.service.AttendanceWatcherService
 import com.drinkwater.reminder.ui.components.SectionTitle
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.*
@@ -70,14 +69,16 @@ fun RemindersScreen(
                     subtitle = "上班打卡定时提醒，亮屏自动弹出班次选择",
                     enabled = attendanceEnabled,
                     onToggle = {
+                        if (it && !PermissionHelper.hasNotificationPermission(context)) {
+                            PermissionHelper.requestNotificationWithGuide(context)
+                            return@ModuleCard
+                        }
                         attendanceEnabled = it
                         prefs.setAttendanceModuleEnabled(it)
                         if (it) {
                             AttendanceReminderScheduler.scheduleIfNeeded(context)
-                            AttendanceWatcherService.start(context)
                         } else {
                             AttendanceReminderScheduler.cancelAll(context)
-                            AttendanceWatcherService.stop(context)
                         }
                     },
                     onClick = onNavigateToAttendanceConfig
@@ -91,6 +92,10 @@ fun RemindersScreen(
                     subtitle = "定时提醒活动身体，适合长时间办公或学习",
                     enabled = sedentaryEnabled,
                     onToggle = {
+                        if (it && !PermissionHelper.hasNotificationPermission(context)) {
+                            PermissionHelper.requestNotificationWithGuide(context)
+                            return@ModuleCard
+                        }
                         sedentaryEnabled = it
                         prefs.setSedentaryModuleEnabled(it)
                         if (it) {
@@ -110,6 +115,10 @@ fun RemindersScreen(
                     subtitle = "到点提醒睡觉，支持软锁屏防熬夜",
                     enabled = bedtimeEnabled,
                     onToggle = {
+                        if (it && !PermissionHelper.hasNotificationPermission(context)) {
+                            PermissionHelper.requestNotificationWithGuide(context)
+                            return@ModuleCard
+                        }
                         bedtimeEnabled = it
                         prefs.setBedtimeModuleEnabled(it)
                         if (it) {

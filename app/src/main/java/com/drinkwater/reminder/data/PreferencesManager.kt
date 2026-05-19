@@ -97,6 +97,9 @@ class PreferencesManager(context: Context) {
     fun isAttendanceVibrateEnabled(): Boolean = prefs.getBoolean(KEY_ATTENDANCE_VIBRATE, true)
     fun setAttendanceVibrateEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_ATTENDANCE_VIBRATE, enabled).apply()
 
+    fun getAttendanceCity(): String = prefs.getString(KEY_ATTENDANCE_CITY, "北京") ?: "北京"
+    fun setAttendanceCity(city: String) = prefs.edit().putString(KEY_ATTENDANCE_CITY, city).apply()
+
     // --- Sedentary ---
     fun getSedentaryInterval(): Int = prefs.getInt(KEY_SEDENTARY_INTERVAL, 45)
     fun setSedentaryInterval(minutes: Int) = prefs.edit().putInt(KEY_SEDENTARY_INTERVAL, minutes).apply()
@@ -149,14 +152,34 @@ class PreferencesManager(context: Context) {
     fun setCustomReminderVibrateEnabled(id: Int, enabled: Boolean) = prefs.edit().putBoolean("custom_${id}_vibrate", enabled).apply()
 
     fun deleteCustomReminder(id: Int) {
-        prefs.edit()
-            .remove("custom_${id}_label")
-            .remove("custom_${id}_time")
-            .remove("custom_${id}_enabled")
-            .remove("custom_${id}_repeat")
-            .remove("custom_${id}_weekdays")
-            .remove("custom_${id}_vibrate")
-            .apply()
+        val editor = prefs.edit()
+        // Remove the item
+        editor.remove("custom_${id}_label")
+        editor.remove("custom_${id}_time")
+        editor.remove("custom_${id}_enabled")
+        editor.remove("custom_${id}_repeat")
+        editor.remove("custom_${id}_weekdays")
+        editor.remove("custom_${id}_vibrate")
+
+        val count = getCustomReminderCount()
+        // Shift remaining items down
+        for (i in id + 1 until count) {
+            editor.putString("custom_${i - 1}_label", getCustomReminderLabel(i))
+            editor.putString("custom_${i - 1}_time", getCustomReminderTime(i))
+            editor.putBoolean("custom_${i - 1}_enabled", isCustomReminderEnabled(i))
+            editor.putString("custom_${i - 1}_repeat", getCustomReminderRepeat(i))
+            editor.putString("custom_${i - 1}_weekdays", getCustomReminderWeekdays(i))
+            editor.putBoolean("custom_${i - 1}_vibrate", isCustomReminderVibrateEnabled(i))
+            // Remove old positions
+            editor.remove("custom_${i}_label")
+            editor.remove("custom_${i}_time")
+            editor.remove("custom_${i}_enabled")
+            editor.remove("custom_${i}_repeat")
+            editor.remove("custom_${i}_weekdays")
+            editor.remove("custom_${i}_vibrate")
+        }
+        editor.putInt(KEY_CUSTOM_COUNT, count - 1)
+        editor.apply()
     }
 
     private fun todayKey(): String {
@@ -187,6 +210,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_ATTENDANCE_FULL_TIME = "attendance_full_time"
         private const val KEY_ATTENDANCE_FULL_END_TIME = "attendance_full_end_time"
         private const val KEY_ATTENDANCE_VIBRATE = "attendance_vibrate"
+        private const val KEY_ATTENDANCE_CITY = "attendance_city"
 
         private const val KEY_SEDENTARY_INTERVAL = "sedentary_interval"
         private const val KEY_SEDENTARY_START = "sedentary_start"
