@@ -25,10 +25,6 @@ class AttendanceAlarmReceiver : BroadcastReceiver() {
         NotificationHelper.sendAttendanceReminder(
             context, shiftLabel, prefs.isAttendanceVibrateEnabled()
         )
-        if (prefs.isAttendancePopupEnabled()) {
-            ReminderPopupActivity.show(context, "打卡提醒",
-                "${shiftLabel}打卡时间到了，请及时打卡！", icon = "attendance")
-        }
 
         // Schedule snooze: remind again in 5 minutes
         val snoozeLabel = if (isStart) "上班" else "下班"
