@@ -113,6 +113,9 @@ class PreferencesManager(context: Context) {
     fun getAttendanceCity(): String = prefs.getString(KEY_ATTENDANCE_CITY, "北京") ?: "北京"
     fun setAttendanceCity(city: String) = prefs.edit().putString(KEY_ATTENDANCE_CITY, city).apply()
 
+    fun isAutoUpdateEnabled(): Boolean = prefs.getBoolean(KEY_AUTO_UPDATE, true)
+    fun setAutoUpdateEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_AUTO_UPDATE, enabled).apply()
+
     fun isWeComAutoDetectEnabled(): Boolean = prefs.getBoolean(KEY_WECOM_AUTO_DETECT, false)
     fun setWeComAutoDetectEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_WECOM_AUTO_DETECT, enabled).apply()
 
@@ -230,6 +233,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_QUIET_END = "quiet_end"
         private const val KEY_VIBRATE = "vibrate"
         private const val KEY_BAND_VIBRATE = "band_vibrate"
+        private const val KEY_AUTO_UPDATE = "auto_update"
         private const val KEY_POPUP_WATER = "popup_water"
         private const val KEY_POPUP_SEDENTARY = "popup_sedentary"
         private const val KEY_POPUP_BEDTIME = "popup_bedtime"

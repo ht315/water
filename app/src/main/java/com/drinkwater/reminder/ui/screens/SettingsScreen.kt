@@ -33,6 +33,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
     var vibrate by remember { mutableStateOf(prefs.isVibrateEnabled()) }
     var bandVibrate by remember { mutableStateOf(prefs.isBandVibrateEnabled()) }
     var waterPopup by remember { mutableStateOf(prefs.isWaterPopupEnabled()) }
+    var autoUpdate by remember { mutableStateOf(prefs.isAutoUpdateEnabled()) }
 
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showGoalPicker by remember { mutableStateOf(false) }
@@ -191,6 +192,26 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
             SectionTitle("其他")
 
             SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.SystemUpdate,
+                    title = "自动检查更新",
+                    subtitle = if (autoUpdate) "打开App时自动检查新版本" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = autoUpdate,
+                            onCheckedChange = {
+                                autoUpdate = it
+                                prefs.setAutoUpdateEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
                     icon = Icons.Default.Help,
                     title = "使用帮助",

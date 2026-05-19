@@ -68,6 +68,25 @@ class MainActivity : ComponentActivity() {
         // Schedule water reminder on launch
         WaterReminderScheduler.schedule(this, prefs.getReminderIntervalMinutes())
 
+        // Check for updates
+        if (prefs.isAutoUpdateEnabled()) {
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val update = UpdateHelper.checkForUpdate(this@MainActivity)
+                if (update != null) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                            .setTitle("发现新版本 ${update.versionName}")
+                            .setMessage(update.body.take(200))
+                            .setPositiveButton("立即更新") { _, _ ->
+                                UpdateHelper.downloadAndInstall(this@MainActivity, update.downloadUrl, "update.apk")
+                            }
+                            .setNegativeButton("稍后", null)
+                            .show()
+                    }
+                }
+            }
+        }
+
         setContent {
             DrinkWaterTheme {
                 var showOnboarding by remember { mutableStateOf(!prefs.isOnboardingDone()) }
