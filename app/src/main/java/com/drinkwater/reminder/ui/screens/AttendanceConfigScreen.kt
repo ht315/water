@@ -22,14 +22,15 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { PreferencesManager(context) }
 
-    var morningTime by remember { mutableStateOf(prefs.getAttendanceMorningTime()) }
-    var nightTime by remember { mutableStateOf(prefs.getAttendanceNightTime()) }
-    var fullTime by remember { mutableStateOf(prefs.getAttendanceFullTime()) }
+    var morningStart by remember { mutableStateOf(prefs.getAttendanceMorningTime()) }
+    var morningEnd by remember { mutableStateOf(prefs.getAttendanceMorningEndTime()) }
+    var nightStart by remember { mutableStateOf(prefs.getAttendanceNightTime()) }
+    var nightEnd by remember { mutableStateOf(prefs.getAttendanceNightEndTime()) }
+    var fullStart by remember { mutableStateOf(prefs.getAttendanceFullTime()) }
+    var fullEnd by remember { mutableStateOf(prefs.getAttendanceFullEndTime()) }
     var vibrate by remember { mutableStateOf(prefs.isAttendanceVibrateEnabled()) }
 
-    var showMorningPicker by remember { mutableStateOf(false) }
-    var showNightPicker by remember { mutableStateOf(false) }
-    var showFullPicker by remember { mutableStateOf(false) }
+    var showPicker by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -55,28 +56,54 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SectionTitle("班次时间设置")
-
+            SectionTitle("早班")
             SettingsCard {
                 SettingsRow(
-                    icon = Icons.Default.WbSunny,
-                    title = "早班提醒时间",
-                    subtitle = morningTime,
-                    onClick = { showMorningPicker = true }
+                    icon = Icons.Default.Login,
+                    title = "上班打卡",
+                    subtitle = morningStart,
+                    onClick = { showPicker = "morning_start" }
                 )
                 Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
-                    icon = Icons.Default.Nightlight,
-                    title = "晚班提醒时间",
-                    subtitle = nightTime,
-                    onClick = { showNightPicker = true }
+                    icon = Icons.Default.Logout,
+                    title = "下班打卡",
+                    subtitle = morningEnd,
+                    onClick = { showPicker = "morning_end" }
+                )
+            }
+
+            SectionTitle("晚班")
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Login,
+                    title = "上班打卡",
+                    subtitle = nightStart,
+                    onClick = { showPicker = "night_start" }
                 )
                 Divider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
-                    icon = Icons.Default.CalendarToday,
-                    title = "通班提醒时间",
-                    subtitle = fullTime,
-                    onClick = { showFullPicker = true }
+                    icon = Icons.Default.Logout,
+                    title = "下班打卡",
+                    subtitle = nightEnd,
+                    onClick = { showPicker = "night_end" }
+                )
+            }
+
+            SectionTitle("通班")
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Login,
+                    title = "上班打卡",
+                    subtitle = fullStart,
+                    onClick = { showPicker = "full_start" }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.Logout,
+                    title = "下班打卡",
+                    subtitle = fullEnd,
+                    onClick = { showPicker = "full_end" }
                 )
             }
 
@@ -111,9 +138,9 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "开启后，每次解锁手机屏幕时会弹出班次选择弹窗，选择当天班次后自动设置提醒时间。\n\n" +
-                        "选择「休息」则当天不提醒。\n" +
-                        "未选择时弹窗关闭，下次亮屏继续弹出。",
+                        "开启后，每次解锁手机屏幕时会弹出班次选择弹窗，选择当天班次后自动设置上下班打卡提醒。\n\n" +
+                        "每个班次可分别设置上班和下班两个提醒时间。\n" +
+                        "选择「休息」则当天不提醒。",
                         fontSize = 14.sp,
                         color = Blue800.copy(alpha = 0.8f),
                         lineHeight = 22.sp
@@ -123,45 +150,25 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
         }
     }
 
-    if (showMorningPicker) {
+    if (showPicker.isNotEmpty()) {
+        val pickerConfig = when (showPicker) {
+            "morning_start" -> Triple("早班上班", morningStart, { t: String -> morningStart = t; prefs.setAttendanceMorningTime(t) })
+            "morning_end" -> Triple("早班下班", morningEnd, { t: String -> morningEnd = t; prefs.setAttendanceMorningEndTime(t) })
+            "night_start" -> Triple("晚班上班", nightStart, { t: String -> nightStart = t; prefs.setAttendanceNightTime(t) })
+            "night_end" -> Triple("晚班下班", nightEnd, { t: String -> nightEnd = t; prefs.setAttendanceNightEndTime(t) })
+            "full_start" -> Triple("通班上班", fullStart, { t: String -> fullStart = t; prefs.setAttendanceFullTime(t) })
+            "full_end" -> Triple("通班下班", fullEnd, { t: String -> fullEnd = t; prefs.setAttendanceFullEndTime(t) })
+            else -> return
+        }
         TimePickerDialog(
-            title = "早班提醒时间",
-            currentTime = morningTime,
-            onDismiss = { showMorningPicker = false },
+            title = pickerConfig.first,
+            currentTime = pickerConfig.second,
+            onDismiss = { showPicker = "" },
             minuteStep = 5,
             onSelect = {
-                morningTime = it
-                prefs.setAttendanceMorningTime(it)
+                pickerConfig.third(it)
                 AttendanceReminderScheduler.scheduleIfNeeded(context)
-                showMorningPicker = false
-            }
-        )
-    }
-    if (showNightPicker) {
-        TimePickerDialog(
-            title = "晚班提醒时间",
-            currentTime = nightTime,
-            onDismiss = { showNightPicker = false },
-            minuteStep = 5,
-            onSelect = {
-                nightTime = it
-                prefs.setAttendanceNightTime(it)
-                AttendanceReminderScheduler.scheduleIfNeeded(context)
-                showNightPicker = false
-            }
-        )
-    }
-    if (showFullPicker) {
-        TimePickerDialog(
-            title = "通班提醒时间",
-            currentTime = fullTime,
-            onDismiss = { showFullPicker = false },
-            minuteStep = 5,
-            onSelect = {
-                fullTime = it
-                prefs.setAttendanceFullTime(it)
-                AttendanceReminderScheduler.scheduleIfNeeded(context)
-                showFullPicker = false
+                showPicker = ""
             }
         )
     }

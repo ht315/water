@@ -10,7 +10,8 @@ import java.util.Calendar
 
 object AttendanceReminderScheduler {
 
-    private const val REQ_ATTENDANCE = 3001
+    private const val REQ_ATTENDANCE_START = 3001
+    private const val REQ_ATTENDANCE_END = 3002
 
     fun scheduleIfNeeded(context: Context) {
         try {
@@ -24,10 +25,11 @@ object AttendanceReminderScheduler {
                 cancelAll(context)
                 return
             }
-            val timeStr = when (shift) {
-                "morning" -> prefs.getAttendanceMorningTime()
-                "night" -> prefs.getAttendanceNightTime()
-                "full" -> prefs.getAttendanceFullTime()
+
+            val (startTime, endTime) = when (shift) {
+                "morning" -> prefs.getAttendanceMorningTime() to prefs.getAttendanceMorningEndTime()
+                "night" -> prefs.getAttendanceNightTime() to prefs.getAttendanceNightEndTime()
+                "full" -> prefs.getAttendanceFullTime() to prefs.getAttendanceFullEndTime()
                 else -> return
             }
             val shiftLabel = when (shift) {
@@ -37,34 +39,8 @@ object AttendanceReminderScheduler {
                 else -> "打卡"
             }
 
-            val parts = timeStr.split(":")
-            val hour = parts[0].toInt()
-            val minute = parts[1].toInt()
-
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intent = Intent(context, AttendanceAlarmReceiver::class.java).apply {
-                putExtra("shift_label", shiftLabel)
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, REQ_ATTENDANCE, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val calendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, hour)
-                set(Calendar.MINUTE, minute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                if (timeInMillis <= System.currentTimeMillis()) {
-                    add(Calendar.DAY_OF_YEAR, 1)
-                }
-            }
-
-            // setAlarmClock is exempt from SCHEDULE_EXACT_ALARM permission on Android 12+
-            alarmManager.setAlarmClock(
-                AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
-                pendingIntent
-            )
+            scheduleOne(context, startTime, "${shiftLabel}上班", REQ_ATTENDANCE_START)
+            scheduleOne(context, endTime, "${shiftLabel}下班", REQ_ATTENDANCE_END)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -73,14 +49,46 @@ object AttendanceReminderScheduler {
     fun cancelAll(context: Context) {
         try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intent = Intent(context, AttendanceAlarmReceiver::class.java)
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, REQ_ATTENDANCE, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            alarmManager.cancel(pendingIntent)
+            listOf(REQ_ATTENDANCE_START, REQ_ATTENDANCE_END).forEach { req ->
+                val intent = Intent(context, AttendanceAlarmReceiver::class.java)
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, req, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                alarmManager.cancel(pendingIntent)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun scheduleOne(context: Context, timeStr: String, label: String, reqCode: Int) {
+        val parts = timeStr.split(":")
+        val hour = parts[0].toInt()
+        val minute = parts[1].toInt()
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, AttendanceAlarmReceiver::class.java).apply {
+            putExtra("shift_label", label)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context, reqCode, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+            pendingIntent
+        )
     }
 }

@@ -79,11 +79,20 @@ class PreferencesManager(context: Context) {
     fun getAttendanceMorningTime(): String = prefs.getString(KEY_ATTENDANCE_MORNING_TIME, "06:00") ?: "06:00"
     fun setAttendanceMorningTime(time: String) = prefs.edit().putString(KEY_ATTENDANCE_MORNING_TIME, time).apply()
 
-    fun getAttendanceNightTime(): String = prefs.getString(KEY_ATTENDANCE_NIGHT_TIME, "18:00") ?: "18:00"
+    fun getAttendanceMorningEndTime(): String = prefs.getString(KEY_ATTENDANCE_MORNING_END_TIME, "14:00") ?: "14:00"
+    fun setAttendanceMorningEndTime(time: String) = prefs.edit().putString(KEY_ATTENDANCE_MORNING_END_TIME, time).apply()
+
+    fun getAttendanceNightTime(): String = prefs.getString(KEY_ATTENDANCE_NIGHT_TIME, "14:00") ?: "14:00"
     fun setAttendanceNightTime(time: String) = prefs.edit().putString(KEY_ATTENDANCE_NIGHT_TIME, time).apply()
+
+    fun getAttendanceNightEndTime(): String = prefs.getString(KEY_ATTENDANCE_NIGHT_END_TIME, "22:00") ?: "22:00"
+    fun setAttendanceNightEndTime(time: String) = prefs.edit().putString(KEY_ATTENDANCE_NIGHT_END_TIME, time).apply()
 
     fun getAttendanceFullTime(): String = prefs.getString(KEY_ATTENDANCE_FULL_TIME, "08:00") ?: "08:00"
     fun setAttendanceFullTime(time: String) = prefs.edit().putString(KEY_ATTENDANCE_FULL_TIME, time).apply()
+
+    fun getAttendanceFullEndTime(): String = prefs.getString(KEY_ATTENDANCE_FULL_END_TIME, "18:00") ?: "18:00"
+    fun setAttendanceFullEndTime(time: String) = prefs.edit().putString(KEY_ATTENDANCE_FULL_END_TIME, time).apply()
 
     fun isAttendanceVibrateEnabled(): Boolean = prefs.getBoolean(KEY_ATTENDANCE_VIBRATE, true)
     fun setAttendanceVibrateEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_ATTENDANCE_VIBRATE, enabled).apply()
@@ -172,8 +181,11 @@ class PreferencesManager(context: Context) {
         private const val KEY_TODAY_SHIFT = "today_shift"
         private const val KEY_TODAY_SHIFT_DATE = "today_shift_date"
         private const val KEY_ATTENDANCE_MORNING_TIME = "attendance_morning_time"
+        private const val KEY_ATTENDANCE_MORNING_END_TIME = "attendance_morning_end_time"
         private const val KEY_ATTENDANCE_NIGHT_TIME = "attendance_night_time"
+        private const val KEY_ATTENDANCE_NIGHT_END_TIME = "attendance_night_end_time"
         private const val KEY_ATTENDANCE_FULL_TIME = "attendance_full_time"
+        private const val KEY_ATTENDANCE_FULL_END_TIME = "attendance_full_end_time"
         private const val KEY_ATTENDANCE_VIBRATE = "attendance_vibrate"
 
         private const val KEY_SEDENTARY_INTERVAL = "sedentary_interval"
