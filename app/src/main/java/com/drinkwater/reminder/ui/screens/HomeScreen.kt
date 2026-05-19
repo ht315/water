@@ -5,8 +5,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -51,10 +53,9 @@ fun HomeScreen(
         label = "progress"
     )
 
-    // Reset count periodically in case of date change
     LaunchedEffect(Unit) {
         while (true) {
-            delay(30_000) // check every 30s
+            delay(30_000)
             drinkCount = prefs.getTodayDrinkCount()
         }
     }
@@ -84,7 +85,8 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -96,13 +98,11 @@ fun HomeScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    // Background circle
                     Canvas(modifier = Modifier.fillMaxSize().padding(20.dp)) {
                         val strokeWidth = 16.dp.toPx()
                         val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
                         val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
 
-                        // Track
                         drawArc(
                             color = Blue100,
                             startAngle = -90f,
@@ -112,7 +112,6 @@ fun HomeScreen(
                             size = arcSize,
                             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                         )
-                        // Progress
                         drawArc(
                             color = if (progress >= 1f) Green500 else Blue700,
                             startAngle = -90f,
@@ -230,6 +229,9 @@ fun HomeScreen(
                     )
                 }
             }
+
+            // Bottom spacer for navigation bar
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

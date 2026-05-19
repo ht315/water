@@ -182,16 +182,20 @@ fun CustomReminderEditScreen(
 
             Button(
                 onClick = {
-                    if (isNew) {
-                        prefs.setCustomReminderCount(actualId + 1)
+                    try {
+                        if (isNew) {
+                            prefs.setCustomReminderCount(actualId + 1)
+                        }
+                        prefs.setCustomReminderLabel(actualId, label.ifEmpty { "未命名" })
+                        prefs.setCustomReminderTime(actualId, time)
+                        prefs.setCustomReminderEnabled(actualId, true)
+                        prefs.setCustomReminderRepeat(actualId, repeat)
+                        prefs.setCustomReminderWeekdays(actualId, weekdays)
+                        prefs.setCustomReminderVibrateEnabled(actualId, vibrate)
+                        CustomReminderScheduler.scheduleAll(context)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    prefs.setCustomReminderLabel(actualId, label.ifEmpty { "未命名" })
-                    prefs.setCustomReminderTime(actualId, time)
-                    prefs.setCustomReminderEnabled(actualId, true)
-                    prefs.setCustomReminderRepeat(actualId, repeat)
-                    prefs.setCustomReminderWeekdays(actualId, weekdays)
-                    prefs.setCustomReminderVibrateEnabled(actualId, vibrate)
-                    CustomReminderScheduler.scheduleAll(context)
                     onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
