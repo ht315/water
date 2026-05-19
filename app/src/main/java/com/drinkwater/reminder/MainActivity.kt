@@ -10,18 +10,32 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.service.FloatingWindowService
-import com.drinkwater.reminder.ui.screens.HomeScreen
-import com.drinkwater.reminder.ui.screens.SettingsScreen
-import com.drinkwater.reminder.ui.theme.DrinkWaterTheme
+import com.drinkwater.reminder.ui.screens.*
+import com.drinkwater.reminder.ui.theme.*
+import com.drinkwater.reminder.util.AttendanceReminderScheduler
+import com.drinkwater.reminder.util.BedtimeReminderScheduler
+import com.drinkwater.reminder.util.CustomReminderScheduler
+import com.drinkwater.reminder.util.SedentaryReminderScheduler
+import com.drinkwater.reminder.util.WaterReminderScheduler
 
 class MainActivity : ComponentActivity() {
 
@@ -38,7 +52,7 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* 无论是否授权，App 都可继续使用 */ }
+    ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,42 +60,129 @@ class MainActivity : ComponentActivity() {
 
         requestNotificationPermission()
 
+        // Schedule water reminder on launch
+        WaterReminderScheduler.schedule(this, prefs.getReminderIntervalMinutes())
+
         setContent {
             DrinkWaterTheme {
-                val navController = rememberNavController()
-                var floatingEnabled by rememberFloatingState()
-
-                NavHost(navController = navController, startDestination = "home") {
-                    composable("home") {
-                        HomeScreen(
-                            floatingEnabled = floatingEnabled,
-                            onToggleFloating = { enable ->
-                                if (enable) {
-                                    checkAndStartFloating()
-                                } else {
-                                    stopFloatingService()
-                                    prefs.setFloatingEnabled(false)
-                                }
-                                floatingEnabled = enable
-                            },
-                            onNavigateToSettings = { navController.navigate("settings") }
-                        )
-                    }
-                    composable("settings") {
-                        SettingsScreen(
-                            onNavigateBack = {
-                                floatingEnabled = prefs.isFloatingEnabled()
-                                navController.popBackStack()
-                            }
-                        )
-                    }
-                }
+                MainScreen()
             }
         }
     }
 
-    @androidx.compose.runtime.Composable
-    private fun rememberFloatingState() = mutableStateOf(prefs.isFloatingEnabled())
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun MainScreen() {
+        val navController = rememberNavController()
+        var floatingEnabled by remember { mutableStateOf(prefs.isFloatingEnabled()) }
+
+        Scaffold(
+            bottomBar = {
+                NavigationBar(containerColor = White) {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+
+                    data class BottomNavItem(val route: String, val label: String, val icon: ImageVector)
+                    val items = listOf(
+                        BottomNavItem("home", "首页", Icons.Default.Home),
+                        BottomNavItem("reminders", "提醒", Icons.Default.Notifications),
+                        BottomNavItem("settings", "设置", Icons.Default.Settings)
+                    )
+
+                    items.forEach { item ->
+                        NavigationBarItem(
+                            icon = { Icon(item.icon, contentDescription = null) },
+                            label = { Text(item.label) },
+                            selected = currentRoute == item.route,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Blue700,
+                                selectedTextColor = Blue700,
+                                indicatorColor = Blue50
+                            )
+                        )
+                    }
+                }
+            }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = "home",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("home") {
+                    HomeScreen(
+                        floatingEnabled = floatingEnabled,
+                        onToggleFloating = { enable ->
+                            if (enable) {
+                                checkAndStartFloating()
+                            } else {
+                                stopFloatingService()
+                                prefs.setFloatingEnabled(false)
+                            }
+                            floatingEnabled = enable
+                        },
+                        onNavigateToSettings = { navController.navigate("settings") }
+                    )
+                }
+
+                composable("reminders") {
+                    RemindersScreen(
+                        onNavigateToAttendanceConfig = { navController.navigate("attendance_config") },
+                        onNavigateToSedentaryConfig = { navController.navigate("sedentary_config") },
+                        onNavigateToBedtimeConfig = { navController.navigate("bedtime_config") },
+                        onNavigateToCustomEdit = { id -> navController.navigate("custom_edit/$id") }
+                    )
+                }
+
+                composable("settings") {
+                    SettingsScreen(
+                        onNavigateBack = {
+                            floatingEnabled = prefs.isFloatingEnabled()
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable("attendance_config") {
+                    AttendanceConfigScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("sedentary_config") {
+                    SedentaryConfigScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("bedtime_config") {
+                    BedtimeConfigScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    "custom_edit/{id}",
+                    arguments = listOf(navArgument("id") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val id = backStackEntry.arguments?.getInt("id") ?: -1
+                    CustomReminderEditScreen(
+                        reminderId = id,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+        }
+    }
 
     private fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

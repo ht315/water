@@ -7,18 +7,71 @@ import android.app.NotificationManager
 class DrinkWaterApp : Application() {
     companion object {
         const val CHANNEL_ID = "water_reminder_channel"
+        const val ATTENDANCE_CHANNEL_ID = "attendance_reminder_channel"
+        const val SEDENTARY_CHANNEL_ID = "sedentary_reminder_channel"
+        const val BEDTIME_CHANNEL_ID = "bedtime_reminder_channel"
+        const val CUSTOM_CHANNEL_ID = "custom_reminder_channel"
     }
 
     override fun onCreate() {
         super.onCreate()
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
+            val manager = getSystemService(NotificationManager::class.java)
+
+            val waterChannel = NotificationChannel(
                 CHANNEL_ID,
                 "喝水提醒",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "定时提醒您喝水" }
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "定时提醒您喝水"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 200, 300)
+            }
+            manager.createNotificationChannel(waterChannel)
+
+            val attendanceChannel = NotificationChannel(
+                ATTENDANCE_CHANNEL_ID,
+                "打卡提醒",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "上班打卡定时提醒"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 200, 300)
+            }
+            manager.createNotificationChannel(attendanceChannel)
+
+            val sedentaryChannel = NotificationChannel(
+                SEDENTARY_CHANNEL_ID,
+                "久坐提醒",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "定时提醒活动身体"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 200, 300)
+            }
+            manager.createNotificationChannel(sedentaryChannel)
+
+            val bedtimeChannel = NotificationChannel(
+                BEDTIME_CHANNEL_ID,
+                "睡前提醒",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "睡前提醒和起床通知"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500)
+            }
+            manager.createNotificationChannel(bedtimeChannel)
+
+            val customChannel = NotificationChannel(
+                CUSTOM_CHANNEL_ID,
+                "自定义提醒",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "用户自定义提醒"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 200, 300)
+            }
+            manager.createNotificationChannel(customChannel)
         }
     }
 }

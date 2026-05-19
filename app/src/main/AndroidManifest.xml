@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".DrinkWaterApp"
@@ -28,6 +31,17 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.screens.ShiftSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Transparent"
+            android:excludeFromRecents="true" />
+
+        <activity
+            android:name=".ui.screens.SleepLockActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
+
         <service
             android:name=".service.FloatingWindowService"
             android:exported="false"
@@ -40,6 +54,26 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".receiver.ScreenUnlockReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receiver.AttendanceAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receiver.BedtimeAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receiver.CustomReminderAlarmReceiver"
+            android:exported="false" />
 
     </application>
 </manifest>

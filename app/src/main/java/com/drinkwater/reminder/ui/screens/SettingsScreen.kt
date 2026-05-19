@@ -8,13 +8,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.WaterReminderScheduler
 
@@ -29,11 +29,13 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
     var quietStart by remember { mutableStateOf(prefs.getQuietStart()) }
     var quietEnd by remember { mutableStateOf(prefs.getQuietEnd()) }
     var vibrate by remember { mutableStateOf(prefs.isVibrateEnabled()) }
+    var bandVibrate by remember { mutableStateOf(prefs.isBandVibrateEnabled()) }
 
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showGoalPicker by remember { mutableStateOf(false) }
     var showQuietStartPicker by remember { mutableStateOf(false) }
     var showQuietEndPicker by remember { mutableStateOf(false) }
+    var showBandGuide by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -64,7 +66,6 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Reminder section
             SectionTitle("提醒设置")
 
             SettingsCard {
@@ -79,7 +80,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                     icon = Icons.Default.Notifications,
                     title = "震动提醒",
                     subtitle = if (vibrate) "已开启" else "已关闭",
-                    onClick = { /* noop */ },
+                    onClick = { },
                     trailing = {
                         Switch(
                             checked = vibrate,
@@ -96,7 +97,37 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 )
             }
 
-            // Goal section
+            SectionTitle("设备联动")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Watch,
+                    title = "手环震动",
+                    subtitle = if (bandVibrate) "已开启（更强震动模式）" else "已关闭",
+                    onClick = { },
+                    trailing = {
+                        Switch(
+                            checked = bandVibrate,
+                            onCheckedChange = {
+                                bandVibrate = it
+                                prefs.setBandVibrateEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.Info,
+                    title = "手环通知同步",
+                    subtitle = "设置手环接收通知的方法",
+                    onClick = { showBandGuide = true }
+                )
+            }
+
             SectionTitle("喝水目标")
 
             SettingsCard {
@@ -108,7 +139,6 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 )
             }
 
-            // Quiet hours section
             SectionTitle("免打扰时段")
 
             SettingsCard {
@@ -186,191 +216,33 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 }
             )
         }
-    }
-}
 
-@Composable
-private fun SectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = Blue700,
-        modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
-    )
-}
-
-@Composable
-private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(content = content)
-    }
-}
-
-@Composable
-private fun SettingsRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit,
-    trailing: @Composable (() -> Unit)? = null
-) {
-    Surface(
-        onClick = onClick,
-        color = White
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(icon, contentDescription = null, tint = Blue700, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Gray600
-                )
-            }
-            if (trailing != null) {
-                trailing()
-            }
-        }
-    }
-}
-
-@Composable
-private fun PickerDialog(
-    title: String,
-    options: List<String>,
-    selectedIndex: Int,
-    onDismiss: () -> Unit,
-    onSelect: (Int) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                options.forEachIndexed { index, option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = index == selectedIndex,
-                            onClick = { onSelect(index) },
-                            colors = RadioButtonDefaults.colors(selectedColor = Blue700)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+        if (showBandGuide) {
+            AlertDialog(
+                onDismissRequest = { showBandGuide = false },
+                title = { Text("手环通知同步设置") },
+                text = {
+                    Column {
+                        Text("1. 打开手环对应的运动健康 App", fontSize = 14.sp)
+                        Text("2. 进入「设备」页面，选择手环", fontSize = 14.sp)
+                        Text("3. 找到「消息通知」或「通知管理」", fontSize = 14.sp)
+                        Text("4. 开启「喝水提醒」的通知权限", fontSize = 14.sp)
+                        Text("5. 确保手环「通知提醒」已开启", fontSize = 14.sp)
+                        Text("6. 收到通知时手环会自动同步震动", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = option,
-                            style = MaterialTheme.typography.bodyLarge
+                            "提示：建议同时开启「手环震动」选项，会使用更强的震动模式以便手环感知。",
+                            color = Orange500,
+                            fontSize = 13.sp
                         )
                     }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
-        }
-    )
-}
-
-@Composable
-private fun TimePickerDialog(
-    title: String,
-    currentTime: String,
-    onDismiss: () -> Unit,
-    onSelect: (String) -> Unit
-) {
-    val hours = (0..23).toList()
-    val minutes = listOf(0, 30)
-    val parts = currentTime.split(":")
-    var selectedHour by remember { mutableIntStateOf(parts[0].toInt()) }
-    var selectedMinute by remember { mutableIntStateOf(parts[1].toInt()) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Hour column
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("时", style = MaterialTheme.typography.labelLarge, color = Gray600)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Column(modifier = Modifier.height(200.dp).verticalScroll(rememberScrollState())) {
-                        hours.forEach { h ->
-                            TextButton(
-                                onClick = { selectedHour = h },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = h.toString().padStart(2, '0'),
-                                    fontWeight = if (h == selectedHour) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (h == selectedHour) Blue700 else Gray800,
-                                    fontSize = if (h == selectedHour) 20.sp else 16.sp
-                                )
-                            }
-                        }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showBandGuide = false }) {
+                        Text("知道了")
                     }
                 }
-
-                Text(":", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Gray600)
-
-                // Minute column
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("分", style = MaterialTheme.typography.labelLarge, color = Gray600)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    minutes.forEach { m ->
-                        TextButton(
-                            onClick = { selectedMinute = m },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = m.toString().padStart(2, '0'),
-                                fontWeight = if (m == selectedMinute) FontWeight.Bold else FontWeight.Normal,
-                                color = if (m == selectedMinute) Blue700 else Gray800,
-                                fontSize = if (m == selectedMinute) 20.sp else 16.sp
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                onSelect("${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}")
-            }) {
-                Text("确定")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("取消")
-            }
+            )
         }
-    )
+    }
 }
