@@ -15,231 +15,114 @@ import com.drinkwater.reminder.R
 
 object NotificationHelper {
 
-    fun sendWaterReminder(context: Context, intervalMinutes: Int, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
+    private fun defaultVibrate(strong: Boolean): LongArray =
+        if (strong) longArrayOf(0, 500, 200, 500, 200, 500)
+        else longArrayOf(0, 300, 200, 300)
 
+    private fun buildBase(
+        context: Context,
+        channelId: String,
+        title: String,
+        text: String,
+        vibrate: Boolean,
+        bandVibrate: Boolean
+    ): NotificationCompat.Builder {
         val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pi = PendingIntent.getActivity(context, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_water_drop)
-            .setContentTitle("该喝水啦！")
-            .setContentText("已经${intervalMinutes}分钟没喝水了，快喝一杯吧")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 300, 200, 300))
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(2001, notification)
-    }
-
-    fun sendDailySummary(context: Context, count: Int, goal: Int, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
-
-        val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val achieved = count >= goal
-        val title = if (achieved) "今天喝水目标达成！" else "今日喝水总结"
-        val text = "今天喝了${count}杯水" + if (achieved) "，已完成目标！" else "，距离目标${goal}杯还差${goal - count}杯"
-
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.CHANNEL_ID)
+        return NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_water_drop)
             .setContentTitle(title)
             .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setContentIntent(pi)
             .setAutoCancel(true)
             .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 300, 200, 300))
+                if (vibrate) {
+                    setVibrate(defaultVibrate(bandVibrate))
                 }
             }
-            .build()
+    }
 
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(2002, notification)
+    private fun checkPermission(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(
+            context, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun vibrate(context: Context): Boolean {
+        val prefs = com.drinkwater.reminder.data.PreferencesManager(context)
+        return prefs.isVibrateEnabled()
+    }
+
+    private fun bandVibrate(context: Context): Boolean {
+        val prefs = com.drinkwater.reminder.data.PreferencesManager(context)
+        return prefs.isBandVibrateEnabled()
+    }
+
+    private fun notify(context: Context, id: Int, n: android.app.Notification) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(id, n)
+    }
+
+    fun sendWaterReminder(context: Context, intervalMinutes: Int, vibrateEnabled: Boolean) {
+        if (!checkPermission(context)) return
+        val n = buildBase(context, DrinkWaterApp.CHANNEL_ID,
+            "该喝水啦！", "已经${intervalMinutes}分钟没喝水了，快喝一杯吧",
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 2001, n)
+    }
+
+    fun sendDailySummary(context: Context, count: Int, goal: Int, vibrateEnabled: Boolean) {
+        if (!checkPermission(context)) return
+        val achieved = count >= goal
+        val title = if (achieved) "今天喝水目标达成！" else "今日喝水总结"
+        val text = "今天喝了${count}杯水" + if (achieved) "，已完成目标！" else "，距离目标${goal}杯还差${goal - count}杯"
+        val n = buildBase(context, DrinkWaterApp.CHANNEL_ID, title, text,
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 2002, n)
     }
 
     fun sendAttendanceReminder(context: Context, shiftLabel: String, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
-
-        val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.ATTENDANCE_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_water_drop)
-            .setContentTitle("打卡提醒")
-            .setContentText("${shiftLabel}打卡时间到了，请及时打卡！")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 500, 200, 500))
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(3001, notification)
+        if (!checkPermission(context)) return
+        val n = buildBase(context, DrinkWaterApp.ATTENDANCE_CHANNEL_ID,
+            "打卡提醒", "${shiftLabel}打卡时间到了，请及时打卡！",
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 3001, n)
     }
 
-    fun sendSedentaryReminder(context: Context, minuteStep: Int, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
-
-        val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.SEDENTARY_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_water_drop)
-            .setContentTitle("久坐提醒")
-            .setContentText("已经坐了${minuteStep}分钟了，起来活动一下吧！")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 300, 200, 300))
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(4001, notification)
+    fun sendSedentaryReminder(context: Context, minutes: Int, vibrateEnabled: Boolean) {
+        if (!checkPermission(context)) return
+        val n = buildBase(context, DrinkWaterApp.SEDENTARY_CHANNEL_ID,
+            "久坐提醒", "已经坐了${minutes}分钟了，起来活动一下吧！",
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 4001, n)
     }
 
     fun sendBedtimeReminder(context: Context, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
-
-        val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.BEDTIME_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_water_drop)
-            .setContentTitle("该睡觉了！")
-            .setContentText("早点休息，明天精神更好")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 500, 200, 500))
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(5001, notification)
+        if (!checkPermission(context)) return
+        val n = buildBase(context, DrinkWaterApp.BEDTIME_CHANNEL_ID,
+            "该睡觉了！", "早点休息，明天精神更好",
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 5001, n)
     }
 
     fun sendWakeUpReminder(context: Context, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
-
-        val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.BEDTIME_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_water_drop)
-            .setContentTitle("早上好！")
-            .setContentText("新的一天开始了，记得喝水哦")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 500, 200, 500))
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(5002, notification)
+        if (!checkPermission(context)) return
+        val n = buildBase(context, DrinkWaterApp.BEDTIME_CHANNEL_ID,
+            "早上好！", "新的一天开始了，记得喝水哦",
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 5002, n)
     }
 
     fun sendCustomReminder(context: Context, label: String, vibrateEnabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) return
-        }
-
-        val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(context, DrinkWaterApp.CUSTOM_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_water_drop)
-            .setContentTitle(label)
-            .setContentText("提醒时间到了")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .apply {
-                if (vibrateEnabled) {
-                    setVibrate(longArrayOf(0, 300, 200, 300))
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(6001, notification)
+        if (!checkPermission(context)) return
+        val n = buildBase(context, DrinkWaterApp.CUSTOM_CHANNEL_ID,
+            label, "提醒时间到了",
+            vibrateEnabled, bandVibrate(context)).build()
+        notify(context, 6001, n)
     }
 }
