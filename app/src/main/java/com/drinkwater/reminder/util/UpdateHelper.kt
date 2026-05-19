@@ -54,42 +54,58 @@ object UpdateHelper {
     }
 
     fun downloadAndInstall(context: Context, url: String, fileName: String) {
+        runOnUiThread { Toast.makeText(context, "开始下载...", Toast.LENGTH_SHORT).show() }
         Thread {
             try {
                 val file = File(context.cacheDir, fileName)
                 file.delete()
+                runOnUiThread { Toast.makeText(context, "连接服务器...", Toast.LENGTH_SHORT).show() }
 
                 val conn = URL(url).openConnection() as HttpURLConnection
                 conn.connectTimeout = 30000; conn.readTimeout = 30000
                 conn.setRequestProperty("Accept", "application/octet-stream")
+                conn.setRequestProperty("User-Agent", "DrinkWaterApp")
+                conn.connect()
+
                 if (conn.responseCode != 200) {
-                    runOnUiThread { Toast.makeText(context, "下载失败: HTTP ${conn.responseCode}", Toast.LENGTH_SHORT).show() }
-                    conn.disconnect(); return@Thread
+                    val msg = "服务器错误: HTTP ${conn.responseCode}"
+                    conn.disconnect()
+                    runOnUiThread { Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
+                    return@Thread
                 }
 
                 val total = conn.contentLength
+                if (total <= 0) {
+                    conn.disconnect()
+                    runOnUiThread { Toast.makeText(context, "文件大小为0，下载地址可能无效", Toast.LENGTH_LONG).show() }
+                    return@Thread
+                }
+
                 conn.inputStream.use { input ->
                     file.outputStream().use { output ->
                         val buffer = ByteArray(8192)
                         var downloaded = 0L
-                        var lastProgress = 0L
                         var bytes: Int
                         while (input.read(buffer).also { bytes = it } != -1) {
                             output.write(buffer, 0, bytes)
                             downloaded += bytes
-                            if (total > 0 && downloaded - lastProgress > total / 10) {
-                                lastProgress = downloaded
-                                val pct = (downloaded * 100 / total).toInt()
-                                runOnUiThread { Toast.makeText(context, "下载中... $pct%", Toast.LENGTH_SHORT).show() }
-                            }
                         }
                     }
                 }
                 conn.disconnect()
 
-                runOnUiThread { installApk(context, file) }
+                if (file.length() == 0L) {
+                    runOnUiThread { Toast.makeText(context, "下载文件为空", Toast.LENGTH_LONG).show() }
+                    return@Thread
+                }
+
+                runOnUiThread {
+                    Toast.makeText(context, "下载完成，正在安装...", Toast.LENGTH_SHORT).show()
+                    installApk(context, file)
+                }
             } catch (e: Exception) {
-                runOnUiThread { Toast.makeText(context, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show() }
+                val msg = e.message ?: e.javaClass.simpleName
+                runOnUiThread { Toast.makeText(context, "失败: $msg", Toast.LENGTH_LONG).show() }
             }
         }.start()
     }
