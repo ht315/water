@@ -19,9 +19,18 @@ class AttendanceAlarmReceiver : BroadcastReceiver() {
         val isEnd = shiftLabel.contains("下班")
         val isPre = shiftLabel.contains("预备")
 
-        // Pre-reminder: activate pre-check flag to trigger on screen unlock
+        // Pre-reminder: open WeChat Work directly
         if (isPre) {
-            prefs.setPreCheckActive(true)
+            if (!prefs.isAttendanceStartDone()) {
+                try {
+                    val wecom = context.packageManager.getLaunchIntentForPackage("com.tencent.wework")
+                    if (wecom != null) { wecom.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(wecom); return }
+                } catch (_: Exception) {}
+                try {
+                    val dt = context.packageManager.getLaunchIntentForPackage("com.alibaba.android.rimet")
+                    if (dt != null) { dt.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(dt); return }
+                } catch (_: Exception) {}
+            }
             return
         }
 
