@@ -30,6 +30,7 @@ import androidx.navigation.navArgument
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.service.FloatingWindowService
 import com.drinkwater.reminder.ui.screens.*
+import com.drinkwater.reminder.util.PermissionHelper
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.AttendanceReminderScheduler
 import com.drinkwater.reminder.util.BedtimeReminderScheduler
@@ -52,7 +53,11 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) { granted ->
+        if (!granted) {
+            PermissionHelper.requestNotificationWithGuide(this)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
+import com.drinkwater.reminder.util.NotificationHelper
+import com.drinkwater.reminder.util.PermissionHelper
 import com.drinkwater.reminder.util.WaterReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,6 +159,32 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
                     title = "每日目标",
                     subtitle = "每天喝 ${dailyGoal} 杯水",
                     onClick = { showGoalPicker = true }
+                )
+            }
+
+            SectionTitle("诊断")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.NotificationsActive,
+                    title = "发送测试提醒",
+                    subtitle = "点击立即发送一条带震动的通知",
+                    onClick = {
+                        val testVibrate = prefs.isVibrateEnabled()
+                        NotificationHelper.sendWaterReminder(context, 0, testVibrate)
+                        android.widget.Toast.makeText(context, "已发送测试通知，请查看通知栏", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.Info,
+                    title = "通知权限",
+                    subtitle = if (PermissionHelper.hasNotificationPermission(context)) "已授权" else "未授权 - 点击前往设置",
+                    onClick = {
+                        if (!PermissionHelper.hasNotificationPermission(context)) {
+                            PermissionHelper.requestNotificationWithGuide(context)
+                        }
+                    }
                 )
             }
 
