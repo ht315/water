@@ -1,18 +1,32 @@
 package com.drinkwater.reminder.util
 
-import com.drinkwater.reminder.data.PreferencesManager
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
+import android.location.LocationManager
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
+
+data class HourlyPrecip(
+    val hour: Int,
+    val precip: Double,
+    val prob: Int
+)
 
 data class WeatherInfo(
     val maxTemp: Double,
     val minTemp: Double,
     val weatherCode: Int,
     val precipitation: Double,
-    val cityName: String
+    val locationName: String,
+    val hourlyPrecip: List<HourlyPrecip> = emptyList()
 ) {
     val weatherDesc: String get() = when (weatherCode) {
         0 -> "晴"
@@ -44,67 +58,103 @@ data class WeatherInfo(
 
 object WeatherHelper {
 
-    // City name → coordinates mapping for common Chinese cities
-    private val cityCoords = mapOf(
-        "北京" to Pair(39.91, 116.40),
-        "上海" to Pair(31.23, 121.47),
-        "广州" to Pair(23.13, 113.26),
-        "深圳" to Pair(22.55, 114.10),
-        "杭州" to Pair(30.27, 120.15),
-        "南京" to Pair(32.06, 118.80),
-        "武汉" to Pair(30.58, 114.30),
-        "成都" to Pair(30.57, 104.07),
-        "重庆" to Pair(29.57, 106.55),
-        "西安" to Pair(34.26, 108.94),
-        "天津" to Pair(39.13, 117.18),
-        "苏州" to Pair(31.30, 120.62),
-        "长沙" to Pair(28.23, 112.94),
-        "郑州" to Pair(34.76, 113.65),
-        "济南" to Pair(36.65, 117.00),
-        "青岛" to Pair(36.07, 120.38),
-        "大连" to Pair(38.91, 121.61),
-        "厦门" to Pair(24.48, 118.09),
-        "福州" to Pair(26.07, 119.30),
-        "合肥" to Pair(31.82, 117.23),
-        "南昌" to Pair(28.68, 115.86),
-        "贵阳" to Pair(26.65, 106.63),
-        "昆明" to Pair(25.04, 102.68),
-        "南宁" to Pair(22.82, 108.37),
-        "沈阳" to Pair(41.80, 123.43),
-        "长春" to Pair(43.88, 125.32),
-        "哈尔滨" to Pair(45.75, 126.64),
-        "石家庄" to Pair(38.04, 114.51),
-        "太原" to Pair(37.87, 112.55)
-    )
+    private fun getLocation(context: Context): Pair<Double, Double>? {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) return null
+        return try {
+            val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+            var best: Location? = null
+            for (p in providers) {
+                val loc = lm.getLastKnownLocation(p) ?: continue
+                if (best == null || loc.time > best.time) best = loc
+            }
+            best?.let { Pair(it.latitude, it.longitude) }
+        } catch (e: Exception) {
+            null
+        }
+    }
 
-    suspend fun fetchWeather(prefs: PreferencesManager): WeatherInfo? {
+    private fun geocode(context: Context, lat: Double, lon: Double): String {
+        return try {
+            val geocoder = Geocoder(context, Locale.CHINESE)
+            val addresses = geocoder.getFromLocation(lat, lon, 1)
+            if (!addresses.isNullOrEmpty()) {
+                val a = addresses[0]
+                // District or locality level
+                a.subLocality ?: a.locality ?: a.subAdminArea ?: a.adminArea ?: "当前位置"
+            } else "当前位置"
+        } catch (e: Exception) {
+            "当前位置"
+        }
+    }
+
+    suspend fun fetchWeather(context: Context): WeatherInfo? {
         return withContext(Dispatchers.IO) {
             try {
-                val city = prefs.getAttendanceCity()
-                val coords = cityCoords[city] ?: cityCoords["北京"]!!
-                val (lat, lon) = coords
+                // Get location
+                val loc = getLocation(context)
+                val lat: Double
+                val lon: Double
+                val locationName: String
 
+                if (loc != null) {
+                    lat = loc.first
+                    lon = loc.second
+                    locationName = geocode(context, lat, lon)
+                } else {
+                    // Fallback to Beijing
+                    lat = 39.91
+                    lon = 116.40
+                    locationName = "北京"
+                }
+
+                // Fetch daily + hourly weather
                 val urlStr = "https://api.open-meteo.com/v1/forecast?" +
                     "latitude=$lat&longitude=$lon" +
                     "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode" +
+                    "&hourly=precipitation_probability,precipitation" +
                     "&timezone=Asia%2FShanghai&forecast_days=1"
 
                 val conn = URL(urlStr).openConnection() as HttpURLConnection
-                conn.connectTimeout = 5000
-                conn.readTimeout = 5000
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+
+                if (conn.responseCode != 200) {
+                    conn.disconnect()
+                    return@withContext null
+                }
 
                 val json = conn.inputStream.bufferedReader().readText()
                 conn.disconnect()
 
                 val root = JSONObject(json)
                 val daily = root.getJSONObject("daily")
+                val hourly = root.optJSONObject("hourly")
+
+                val hourlyPrecip = mutableListOf<HourlyPrecip>()
+                if (hourly != null) {
+                    val times = hourly.getJSONArray("time")
+                    val precips = hourly.getJSONArray("precipitation")
+                    val probs = hourly.optJSONArray("precipitation_probability")
+                    for (i in 0 until times.length()) {
+                        val timeStr = times.getString(i)
+                        val hour = timeStr.substring(11, 13).toInt()
+                        hourlyPrecip.add(HourlyPrecip(
+                            hour = hour,
+                            precip = precips.getDouble(i),
+                            prob = if (probs != null) probs.optInt(i, 0) else 0
+                        ))
+                    }
+                }
 
                 WeatherInfo(
                     maxTemp = daily.getJSONArray("temperature_2m_max").getDouble(0),
                     minTemp = daily.getJSONArray("temperature_2m_min").getDouble(0),
                     weatherCode = daily.getJSONArray("weathercode").getInt(0),
                     precipitation = daily.getJSONArray("precipitation_sum").getDouble(0),
-                    cityName = city
+                    locationName = locationName,
+                    hourlyPrecip = hourlyPrecip
                 )
             } catch (e: Exception) {
                 e.printStackTrace()

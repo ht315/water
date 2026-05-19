@@ -1,10 +1,14 @@
 package com.drinkwater.reminder.ui.screens
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,41 +20,57 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.AttendanceReminderScheduler
+import com.drinkwater.reminder.util.HourlyPrecip
 import com.drinkwater.reminder.util.WeatherHelper
 import com.drinkwater.reminder.util.WeatherInfo
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class ShiftSelectionActivity : ComponentActivity() {
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* proceed regardless */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Show even on lock screen
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        // Request location permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
         setContent {
             val scope = rememberCoroutineScope()
-            val prefs = remember { PreferencesManager(this@ShiftSelectionActivity) }
+            val context = this@ShiftSelectionActivity
             var weather by remember { mutableStateOf<WeatherInfo?>(null) }
             var weatherLoading by remember { mutableStateOf(true) }
             var selected by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
-                weather = WeatherHelper.fetchWeather(prefs)
+                weather = WeatherHelper.fetchWeather(context)
                 weatherLoading = false
             }
 
@@ -62,8 +82,8 @@ class ShiftSelectionActivity : ComponentActivity() {
             ) {
                 Card(
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(8.dp),
+                        .fillMaxWidth(0.92f)
+                        .padding(4.dp),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = White)
                 ) {
@@ -73,87 +93,63 @@ class ShiftSelectionActivity : ComponentActivity() {
                             .padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Title
-                        Text(
-                            "选择今天的班次",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Gray800
-                        )
+                        Text("选择今天的班次", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Gray800)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             SimpleDateFormat("MM月dd日 EEEE", Locale.CHINESE).format(Date()),
-                            fontSize = 13.sp,
-                            color = Gray600
+                            fontSize = 13.sp, color = Gray600
                         )
 
-                        // Weather card
                         Spacer(modifier = Modifier.height(12.dp))
+
+                        // Weather card
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(containerColor = Blue50)
                         ) {
                             if (weatherLoading) {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().padding(20.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
                                     CircularProgressIndicator(color = Blue700, modifier = Modifier.size(24.dp))
                                 }
                             } else if (weather != null) {
                                 val w = weather!!
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Row(verticalAlignment = Alignment.Bottom) {
-                                            Text("${w.cityName}", fontSize = 15.sp, color = Gray800)
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                w.weatherDesc,
-                                                fontSize = 13.sp,
-                                                color = Blue700,
-                                                fontWeight = FontWeight.Medium
-                                            )
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(verticalAlignment = Alignment.Bottom) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Row(verticalAlignment = Alignment.Bottom) {
+                                                Text(w.locationName, fontSize = 15.sp, color = Gray800)
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(w.weatherDesc, fontSize = 13.sp, color = Blue700, fontWeight = FontWeight.Medium)
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text("${w.minTemp.toInt()}° ~ ${w.maxTemp.toInt()}°", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Gray800)
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(Icons.Default.Checkroom, null, tint = Orange500, modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(w.clothingAdvice, fontSize = 12.sp, color = Gray600)
+                                            }
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(if (w.precipitation > 0.5) Icons.Default.Umbrella else Icons.Default.WbSunny,
+                                                    null, tint = if (w.precipitation > 0.5) Blue700 else Orange500, modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(w.umbrellaAdvice, fontSize = 12.sp, color = Gray600)
+                                            }
                                         }
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            "${w.minTemp.toInt()}° ~ ${w.maxTemp.toInt()}°",
-                                            fontSize = 26.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Gray800
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                    }
 
-                                        // Clothing + Umbrella
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Checkroom, contentDescription = null,
-                                                tint = Orange500, modifier = Modifier.size(14.dp))
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(w.clothingAdvice, fontSize = 12.sp, color = Gray600)
-                                        }
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                if (w.precipitation > 0.5) Icons.Default.Umbrella else Icons.Default.WbSunny,
-                                                contentDescription = null,
-                                                tint = if (w.precipitation > 0.5) Blue700 else Orange500,
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(w.umbrellaAdvice, fontSize = 12.sp, color = Gray600)
-                                        }
+                                    // Precipitation chart
+                                    if (w.hourlyPrecip.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text("今日降雨趋势", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Gray600)
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        PrecipChart(w.hourlyPrecip)
                                     }
                                 }
                             } else {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                                     Text("无法获取天气", fontSize = 13.sp, color = Gray600)
                                 }
                             }
@@ -164,7 +160,6 @@ class ShiftSelectionActivity : ComponentActivity() {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Shift buttons
                         ShiftButton("早班", Blue700) { saveAndFinish("morning"); selected = true }
                         Spacer(modifier = Modifier.height(8.dp))
                         ShiftButton("晚班", Blue700) { saveAndFinish("night"); selected = true }
@@ -201,6 +196,74 @@ class ShiftSelectionActivity : ComponentActivity() {
             colors = ButtonDefaults.buttonColors(containerColor = color)
         ) {
             Text(label, fontSize = 17.sp)
+        }
+    }
+}
+
+@Composable
+private fun PrecipChart(data: List<HourlyPrecip>) {
+    val maxPrecip = data.maxOf { it.precip }.coerceAtLeast(0.5)
+    val blueBar = Blue700
+    val lightBar = Blue200
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            // Y-axis labels
+            Text("mm", fontSize = 10.sp, color = Gray600)
+            Canvas(modifier = Modifier.fillMaxWidth().height(80.dp)) {
+                val w = size.width
+                val h = size.height
+                val barCount = data.size
+                if (barCount == 0) return@Canvas
+
+                val barW = (w / barCount) * 0.6f
+                val gap = (w / barCount) * 0.4f
+
+                data.forEachIndexed { i, item ->
+                    val barH = (item.precip / maxPrecip * h * 0.85f).toFloat()
+                    val x = i * (barW + gap) + gap / 2
+                    val y = h - barH
+
+                    // Bar
+                    drawRect(
+                        color = if (item.precip > 0) blueBar else lightBar,
+                        topLeft = Offset(x, y),
+                        size = androidx.compose.ui.geometry.Size(barW, barH)
+                    )
+
+                    // Hour label (every 3 hours)
+                    if (item.hour % 3 == 0) {
+                        drawContext.canvas.nativeCanvas.drawText(
+                            "${item.hour}时",
+                            x + barW / 2,
+                            h + 14f,
+                            android.graphics.Paint().apply {
+                                color = android.graphics.Color.GRAY
+                                textSize = 22f
+                                textAlign = android.graphics.Paint.Align.CENTER
+                            }
+                        )
+                    }
+
+                    // Rain probability
+                    if (item.prob > 30) {
+                        drawContext.canvas.nativeCanvas.drawText(
+                            "${item.prob}%",
+                            x + barW / 2,
+                            y - 4f,
+                            android.graphics.Paint().apply {
+                                color = android.graphics.Color.parseColor("#1976D2")
+                                textSize = 20f
+                                textAlign = android.graphics.Paint.Align.CENTER
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }

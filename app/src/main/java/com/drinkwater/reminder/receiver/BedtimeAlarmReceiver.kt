@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.service.SleepLockOverlayService
 import com.drinkwater.reminder.ui.screens.ReminderPopupActivity
-import com.drinkwater.reminder.ui.screens.SleepLockActivity
 import com.drinkwater.reminder.util.BedtimeReminderScheduler
 import com.drinkwater.reminder.util.NotificationHelper
 
@@ -25,15 +25,13 @@ class BedtimeAlarmReceiver : BroadcastReceiver() {
                 NotificationHelper.sendBedtimeReminder(context, vibrate)
                 if (popup) ReminderPopupActivity.show(context, "该睡觉了！", "早点休息，明天精神更好", icon = "bedtime")
                 if (prefs.isBedtimeLockEnabled()) {
-                    val lockIntent = Intent(context, SleepLockActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    context.startActivity(lockIntent)
+                    SleepLockOverlayService.start(context)
                 }
             }
             "wakeup" -> {
                 NotificationHelper.sendWakeUpReminder(context, vibrate)
                 if (popup) ReminderPopupActivity.show(context, "早上好！", "新的一天开始了", icon = "bedtime")
+                SleepLockOverlayService.stop(context)
             }
         }
 
