@@ -1,5 +1,6 @@
 package com.drinkwater.reminder.ui.screens
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -126,10 +127,12 @@ fun CustomReminderEditScreen(
                     }
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text("选择星期", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             for (i in 1..7) {
                                 val day = i
@@ -146,7 +149,8 @@ fun CustomReminderEditScreen(
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = Blue700,
                                         selectedLabelColor = White
-                                    )
+                                    ),
+                                    modifier = Modifier.size(42.dp, 36.dp)
                                 )
                             }
                         }

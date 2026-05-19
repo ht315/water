@@ -41,6 +41,15 @@ fun RemindersScreen(
                 )
             )
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onNavigateToCustomEdit(-1) },
+                containerColor = Blue700,
+                contentColor = White
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "添加")
+            }
+        },
         containerColor = Gray50
     ) { padding ->
         LazyColumn(
@@ -48,7 +57,8 @@ fun RemindersScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             item { SectionTitle("内置提醒") }
 
@@ -162,14 +172,6 @@ fun RemindersScreen(
             }
         }
 
-        FloatingActionButton(
-            onClick = { onNavigateToCustomEdit(-1) },
-            modifier = Modifier.padding(16.dp),
-            containerColor = Blue700,
-            contentColor = White
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "添加")
-        }
     }
 }
 
