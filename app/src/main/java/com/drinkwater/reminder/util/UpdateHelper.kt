@@ -30,7 +30,7 @@ object UpdateHelper {
             if (conn.responseCode != 200) { conn.disconnect(); return null }
 
             val json = conn.inputStream.bufferedReader().readText()
-            conn.disconnect()
+            finalConn.disconnect()
             val release = JSONObject(json)
             val name = release.getString("tag_name")
             val body = release.optString("body", "")
@@ -76,14 +76,29 @@ object UpdateHelper {
 
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 10000; conn.readTimeout = 15000
+            conn.instanceFollowRedirects = true
             conn.setRequestProperty("Accept", "application/octet-stream")
             conn.setRequestProperty("User-Agent", "DrinkWaterApp")
             conn.connect()
 
-            if (conn.responseCode != 200) { conn.disconnect(); return false }
-            if (conn.contentLength <= 0) { conn.disconnect(); return false }
+            // Follow redirect manually
+            var finalConn = conn
+            var redirects = 0
+            while (finalConn.responseCode in 301..308 && redirects < 5) {
+                val newUrl = finalConn.getHeaderField("Location") ?: break
+                finalConn.disconnect()
+                finalConn = URL(newUrl).openConnection() as HttpURLConnection
+                finalConn.connectTimeout = 10000; finalConn.readTimeout = 15000
+                finalConn.setRequestProperty("Accept", "application/octet-stream")
+                finalConn.setRequestProperty("User-Agent", "DrinkWaterApp")
+                finalConn.connect()
+                redirects++
+            }
 
-            conn.inputStream.use { input ->
+            if (finalConn.responseCode != 200) { finalConn.disconnect(); return false }
+            if (finalConn.contentLength <= 0) { finalConn.disconnect(); return false }
+
+            finalConn.inputStream.use { input ->
                 file.outputStream().use { output ->
                     val buffer = ByteArray(8192)
                     var bytes: Int
@@ -92,15 +107,27 @@ object UpdateHelper {
                     }
                 }
             }
-            conn.disconnect()
+            finalConn.disconnect()
 
-            if (file.length() > 0) {
+            if (file.length() > 0 && isApkFile(file)) {
                 runOnUiThread {
                     Toast.makeText(context, "下载完成，正在安装...", Toast.LENGTH_SHORT).show()
                     installApk(context, file)
                 }
                 true
-            } else false
+            } else {
+                file.delete()
+                false
+            }
+        } catch (e: Exception) { false }
+    }
+
+    private fun isApkFile(file: File): Boolean {
+        return try {
+            val header = ByteArray(4)
+            file.inputStream().use { it.read(header) }
+            // APK = ZIP = starts with PK (0x50 0x4B)
+            header[0] == 0x50.toByte() && header[1] == 0x4B.toByte()
         } catch (e: Exception) { false }
     }
 
