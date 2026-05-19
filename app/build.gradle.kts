@@ -7,12 +7,27 @@ android {
     namespace = "com.drinkwater.reminder"
     compileSdk = 34
 
+    signingConfigs {
+        create("fixed") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "debug"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.drinkwater.reminder"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+    }
+
+    buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("fixed")
+        }
     }
 
     buildFeatures {
