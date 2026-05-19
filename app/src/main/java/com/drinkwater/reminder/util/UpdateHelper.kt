@@ -56,7 +56,7 @@ object UpdateHelper {
     fun downloadAndInstall(context: Context, url: String, fileName: String) {
         Thread {
             try {
-                val file = File(context.externalCacheDir, fileName)
+                val file = File(context.cacheDir, fileName)
                 file.delete()
 
                 val conn = URL(url).openConnection() as HttpURLConnection
