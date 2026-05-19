@@ -1,35 +1,52 @@
 package com.drinkwater.reminder.util
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import java.util.concurrent.TimeUnit
+import android.content.Intent
+import java.util.Calendar
 
 object WaterReminderScheduler {
 
-    private const val WORK_NAME = "water_reminder_periodic"
+    private const val REQ_WATER = 1001
 
     fun schedule(context: Context, intervalMinutes: Int) {
-        val constraints = Constraints.Builder()
-            .build()
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, com.drinkwater.reminder.receiver.WaterReminderAlarmReceiver::class.java)
+            intent.putExtra("interval", intervalMinutes)
 
-        val request = PeriodicWorkRequestBuilder<WaterReminderWorker>(
-            intervalMinutes.toLong(), TimeUnit.MINUTES,
-            5, TimeUnit.MINUTES // flex interval
-        )
-            .setConstraints(constraints)
-            .build()
+            val pendingIntent = PendingIntent.getBroadcast(
+                context, REQ_WATER, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            WORK_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            request
-        )
+            val calendar = Calendar.getInstance().apply {
+                add(Calendar.MINUTE, intervalMinutes)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
+            alarmManager.setAlarmClock(
+                AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+                pendingIntent
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun cancel(context: Context) {
-        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, com.drinkwater.reminder.receiver.WaterReminderAlarmReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context, REQ_WATER, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(pendingIntent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

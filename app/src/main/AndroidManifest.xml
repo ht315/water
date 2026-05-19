@@ -61,6 +61,14 @@
         </receiver>
 
         <receiver
+            android:name=".receiver.WaterReminderAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receiver.SedentaryReminderAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".receiver.ScreenUnlockReceiver"
             android:exported="false">
             <intent-filter>
