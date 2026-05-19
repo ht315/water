@@ -22,6 +22,7 @@ class SleepLockOverlayService : Service() {
     private var overlayView: View? = null
     private var backPressCount = 0
     private var lastBackPressTime = 0L
+    private var testMode = false
 
     override fun onCreate() {
         super.onCreate()
@@ -30,8 +31,9 @@ class SleepLockOverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        testMode = intent?.getBooleanExtra("test_mode", false) ?: false
         val prefs = PreferencesManager(this)
-        if (!prefs.isBedtimeModuleEnabled() || !prefs.isBedtimeLockEnabled()) {
+        if (!testMode && (!prefs.isBedtimeModuleEnabled() || !prefs.isBedtimeLockEnabled())) {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -151,7 +153,7 @@ class SleepLockOverlayService : Service() {
             override fun run() {
                 clockText.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
                 val p = PreferencesManager(this@SleepLockOverlayService)
-                if (!isInSleepHours(p)) { stopSelf(); return }
+                if (!testMode && !isInSleepHours(p)) { stopSelf(); return }
                 handler.postDelayed(this, 1000)
             }
         })
@@ -200,11 +202,15 @@ class SleepLockOverlayService : Service() {
     }
 
     companion object {
-        fun start(context: Context) {
-            context.startForegroundService(Intent(context, SleepLockOverlayService::class.java))
+        fun start(context: Context, testMode: Boolean = false) {
+            val intent = Intent(context, SleepLockOverlayService::class.java).apply {
+                putExtra("test_mode", testMode)
+            }
+            context.startForegroundService(intent)
         }
         fun stop(context: Context) {
             context.stopService(Intent(context, SleepLockOverlayService::class.java))
         }
     }
+}
 }

@@ -12,9 +12,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.service.SleepLockOverlayService
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.BedtimeReminderScheduler
+import com.drinkwater.reminder.util.PermissionHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,6 +125,22 @@ fun BedtimeConfigScreen(onNavigateBack: () -> Unit) {
                         lineHeight = 22.sp
                     )
                 }
+            }
+
+            SectionTitle("测试")
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.LockOpen,
+                    title = "立即测试锁屏",
+                    subtitle = "点击后立即弹出锁屏遮罩（按返回键3次退出）",
+                    onClick = {
+                        if (!PermissionHelper.hasOverlayPermission(context)) {
+                            PermissionHelper.requestOverlayWithGuide(context)
+                        } else {
+                            SleepLockOverlayService.start(context, testMode = true)
+                        }
+                    }
+                )
             }
 
             SectionTitle("通知设置")
