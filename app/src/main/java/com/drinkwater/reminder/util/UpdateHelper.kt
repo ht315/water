@@ -1,10 +1,7 @@
 package com.drinkwater.reminder.util
 
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -57,33 +54,48 @@ object UpdateHelper {
     }
 
     fun downloadAndInstall(context: Context, url: String, fileName: String) {
-        try {
-            val file = File(context.externalCacheDir, fileName)
-            file.delete()
+        Thread {
+            try {
+                val file = File(context.externalCacheDir, fileName)
+                file.delete()
 
-            val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val request = DownloadManager.Request(Uri.parse(url))
-                .setTitle("下载更新")
-                .setDescription("日常提醒助手")
-                .setDestinationUri(Uri.fromFile(file))
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                val conn = URL(url).openConnection() as HttpURLConnection
+                conn.connectTimeout = 30000; conn.readTimeout = 30000
+                conn.setRequestProperty("Accept", "application/octet-stream")
+                if (conn.responseCode != 200) {
+                    runOnUiThread { Toast.makeText(context, "下载失败: HTTP ${conn.responseCode}", Toast.LENGTH_SHORT).show() }
+                    conn.disconnect(); return@Thread
+                }
 
-            val downloadId = dm.enqueue(request)
-
-            val receiver = object : BroadcastReceiver() {
-                override fun onReceive(ctx: Context, intent: Intent) {
-                    val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                    if (id == downloadId) {
-                        ctx.unregisterReceiver(this)
-                        installApk(ctx, file)
+                val total = conn.contentLength
+                conn.inputStream.use { input ->
+                    file.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var downloaded = 0L
+                        var lastProgress = 0L
+                        var bytes: Int
+                        while (input.read(buffer).also { bytes = it } != -1) {
+                            output.write(buffer, 0, bytes)
+                            downloaded += bytes
+                            if (total > 0 && downloaded - lastProgress > total / 10) {
+                                lastProgress = downloaded
+                                val pct = (downloaded * 100 / total).toInt()
+                                runOnUiThread { Toast.makeText(context, "下载中... $pct%", Toast.LENGTH_SHORT).show() }
+                            }
+                        }
                     }
                 }
-            }
-            context.registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+                conn.disconnect()
 
-        } catch (e: Exception) {
-            Toast.makeText(context, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
+                runOnUiThread { installApk(context, file) }
+            } catch (e: Exception) {
+                runOnUiThread { Toast.makeText(context, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
+        }.start()
+    }
+
+    private fun runOnUiThread(action: () -> Unit) {
+        android.os.Handler(android.os.Looper.getMainLooper()).post(action)
     }
 
     private fun installApk(context: Context, file: File) {
