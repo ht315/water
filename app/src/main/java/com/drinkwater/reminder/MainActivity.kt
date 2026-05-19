@@ -65,7 +65,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             DrinkWaterTheme {
-                MainScreen()
+                var showOnboarding by remember { mutableStateOf(!prefs.isOnboardingDone()) }
+
+                if (showOnboarding) {
+                    OnboardingScreen(onFinish = { showOnboarding = false })
+                } else {
+                    MainScreen()
+                }
             }
         }
     }
@@ -148,8 +154,13 @@ class MainActivity : ComponentActivity() {
                         onNavigateBack = {
                             floatingEnabled = prefs.isFloatingEnabled()
                             navController.popBackStack()
-                        }
+                        },
+                        onNavigateToHelp = { navController.navigate("help") }
                     )
+                }
+
+                composable("help") {
+                    HelpScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
                 composable("attendance_config") {

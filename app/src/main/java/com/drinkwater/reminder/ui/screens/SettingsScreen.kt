@@ -20,7 +20,7 @@ import com.drinkwater.reminder.util.WaterReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onNavigateBack: () -> Unit) {
+fun SettingsScreen(onNavigateBack: () -> Unit, onNavigateToHelp: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { PreferencesManager(context) }
 
@@ -136,6 +136,17 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                     title = "每日目标",
                     subtitle = "每天喝 ${dailyGoal} 杯水",
                     onClick = { showGoalPicker = true }
+                )
+            }
+
+            SectionTitle("其他")
+
+            SettingsCard {
+                SettingsRow(
+                    icon = Icons.Default.Help,
+                    title = "使用帮助",
+                    subtitle = "功能介绍、权限说明、厂商适配指南",
+                    onClick = onNavigateToHelp
                 )
             }
 

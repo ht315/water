@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">喝水提醒</string>
+    <string name="app_name">日常提醒助手</string>
     <string name="floating_notification_title">喝水提醒运行中</string>
     <string name="floating_notification_text">点击浮窗记录喝水</string>
     <string name="drink_recorded">已记录喝水！今日：%1$d杯</string>

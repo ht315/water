@@ -200,5 +200,9 @@ class PreferencesManager(context: Context) {
         private const val KEY_BEDTIME_VIBRATE = "bedtime_vibrate"
 
         private const val KEY_CUSTOM_COUNT = "custom_reminder_count"
+        private const val KEY_ONBOARDING_DONE = "onboarding_done"
     }
+
+    fun isOnboardingDone(): Boolean = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
+    fun setOnboardingDone() = prefs.edit().putBoolean(KEY_ONBOARDING_DONE, true).apply()
 }

@@ -63,7 +63,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("喝水提醒") },
+                title = { Text("日常提醒助手") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Blue700,
                     titleContentColor = White
