@@ -66,7 +66,7 @@ class ReminderPopupActivity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.3f))
-                        .clickable { visible = false; delay(300); finish() },
+                        .clickable { visible = false; finish() },
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Card(
@@ -139,7 +139,6 @@ class ReminderPopupActivity : ComponentActivity() {
                                         val prefs = PreferencesManager(this@ReminderPopupActivity)
                                         prefs.recordDrink()
                                         visible = false
-                                        delay(300)
                                         finish()
                                     },
                                     modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -155,10 +154,9 @@ class ReminderPopupActivity : ComponentActivity() {
 
                             TextButton(onClick = {
                                 visible = false
-                                delay(300)
                                 finish()
                             }) {
-                                Text(if (actionType == "drink") "稍后再说" else "知道了", color = Gray500)
+                                Text(if (actionType == "drink") "稍后再说" else "知道了", color = Gray600)
                             }
                         }
                     }
