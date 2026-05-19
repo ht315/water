@@ -164,6 +164,13 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
                             onCheckedChange = {
                                 preReminder = it
                                 prefs.setAttendancePreReminderEnabled(it)
+                                if (it) {
+                                    // Set active immediately for testing
+                                    prefs.setPreCheckActive(true)
+                                    android.widget.Toast.makeText(context, "已开启，下次解锁屏幕将自动跳转企业微信", android.widget.Toast.LENGTH_LONG).show()
+                                } else {
+                                    prefs.setPreCheckActive(false)
+                                }
                                 AttendanceReminderScheduler.scheduleIfNeeded(context)
                             },
                             colors = SwitchDefaults.colors(
