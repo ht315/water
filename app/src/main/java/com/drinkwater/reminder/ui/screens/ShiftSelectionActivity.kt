@@ -111,7 +111,7 @@ class ShiftSelectionActivity : ComponentActivity() {
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
                                         Row(verticalAlignment = Alignment.Bottom) {
-                                            Text("${w.cityName}", fontSize = 15.sp, color = Gray700)
+                                            Text("${w.cityName}", fontSize = 15.sp, color = Gray800)
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 w.weatherDesc,
@@ -154,13 +154,13 @@ class ShiftSelectionActivity : ComponentActivity() {
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text("无法获取天气", fontSize = 13.sp, color = Gray500)
+                                    Text("无法获取天气", fontSize = 13.sp, color = Gray600)
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("不选择将不会设置打卡提醒", fontSize = 13.sp, color = Gray500, textAlign = TextAlign.Center)
+                        Text("不选择将不会设置打卡提醒", fontSize = 13.sp, color = Gray600, textAlign = TextAlign.Center)
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -175,7 +175,7 @@ class ShiftSelectionActivity : ComponentActivity() {
 
                         Spacer(modifier = Modifier.height(12.dp))
                         TextButton(onClick = { if (!selected) finish() }) {
-                            Text("暂不选择", color = Gray500)
+                            Text("暂不选择", color = Gray600)
                         }
                     }
                 }

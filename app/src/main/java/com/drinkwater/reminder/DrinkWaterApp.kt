@@ -3,6 +3,7 @@ package com.drinkwater.reminder
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import com.drinkwater.reminder.receiver.ScreenUnlockReceiver
