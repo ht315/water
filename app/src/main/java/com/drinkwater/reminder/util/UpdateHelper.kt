@@ -10,8 +10,6 @@ import android.os.Build
 import android.os.Environment
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
@@ -28,11 +26,11 @@ object UpdateHelper {
         val body: String
     )
 
-    suspend fun checkForUpdate(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
-        try {
+    fun checkForUpdate(context: Context): UpdateInfo? {
+        return try {
             val conn = URL(RELEASES_URL).openConnection() as HttpURLConnection
             conn.connectTimeout = 8000; conn.readTimeout = 8000
-            if (conn.responseCode != 200) { conn.disconnect(); return@withContext null }
+            if (conn.responseCode != 200) { conn.disconnect(); return null }
 
             val json = conn.inputStream.bufferedReader().readText()
             conn.disconnect()
@@ -40,7 +38,7 @@ object UpdateHelper {
             val name = release.getString("tag_name")
             val body = release.optString("body", "")
             val assets = release.getJSONArray("assets")
-            if (assets.length() == 0) return@withContext null
+            if (assets.length() == 0) return null
 
             val asset = assets.getJSONObject(0)
             val downloadUrl = asset.getString("browser_download_url")
@@ -49,9 +47,9 @@ object UpdateHelper {
             val currentCode = context.packageManager.getPackageInfo(context.packageName, 0).versionCode
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val longCode = context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode
-                if (vCode <= longCode) return@withContext null
+                if (vCode <= longCode) return null
             } else {
-                if (vCode <= currentCode) return@withContext null
+                if (vCode <= currentCode) return null
             }
 
             UpdateInfo(vCode, name, downloadUrl, body)

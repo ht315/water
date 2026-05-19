@@ -31,6 +31,7 @@ import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.service.FloatingWindowService
 import com.drinkwater.reminder.ui.screens.*
 import com.drinkwater.reminder.util.PermissionHelper
+import com.drinkwater.reminder.util.UpdateHelper
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.AttendanceReminderScheduler
 import com.drinkwater.reminder.util.BedtimeReminderScheduler
@@ -70,21 +71,21 @@ class MainActivity : ComponentActivity() {
 
         // Check for updates
         if (prefs.isAutoUpdateEnabled()) {
-            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                val update = UpdateHelper.checkForUpdate(this@MainActivity)
-                if (update != null) {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
-                            .setTitle("发现新版本 ${update.versionName}")
-                            .setMessage(update.body.take(200))
+            Thread {
+                val update = UpdateHelper.checkForUpdate(this)
+                update?.let { info ->
+                    runOnUiThread {
+                        android.app.AlertDialog.Builder(this)
+                            .setTitle("发现新版本 ${info.versionName}")
+                            .setMessage(info.body.take(200))
                             .setPositiveButton("立即更新") { _, _ ->
-                                UpdateHelper.downloadAndInstall(this@MainActivity, update.downloadUrl, "update.apk")
+                                UpdateHelper.downloadAndInstall(this, info.downloadUrl, "update.apk")
                             }
                             .setNegativeButton("稍后", null)
                             .show()
                     }
                 }
-            }
+            }.start()
         }
 
         setContent {
