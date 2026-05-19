@@ -10,8 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.drinkwater.reminder.data.PreferencesManager
+import android.content.Intent
 import com.drinkwater.reminder.ui.components.SectionTitle
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.*
@@ -83,6 +85,59 @@ fun RemindersScreen(
                     },
                     onClick = onNavigateToAttendanceConfig
                 )
+            }
+
+            // Show current shift status if attendance enabled and shift selected
+            if (attendanceEnabled && prefs.isTodayShiftSelected()) {
+                val shift = prefs.getTodayShift()
+                val label = when (shift) {
+                    "morning" -> "早班"; "night" -> "晚班"; "full" -> "通班"; else -> ""
+                }
+                val startTime = when (shift) {
+                    "morning" -> prefs.getAttendanceMorningTime()
+                    "night" -> prefs.getAttendanceNightTime()
+                    "full" -> prefs.getAttendanceFullTime()
+                    else -> ""
+                }
+                val endTime = when (shift) {
+                    "morning" -> prefs.getAttendanceMorningEndTime()
+                    "night" -> prefs.getAttendanceNightEndTime()
+                    "full" -> prefs.getAttendanceFullEndTime()
+                    else -> ""
+                }
+                val startDone = prefs.isAttendanceStartDone()
+                val endDone = prefs.isAttendanceEndDone()
+                val startIcon = if (startDone) "✅" else "⏳"
+                val endIcon = if (endDone) "✅" else "⏳"
+
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Blue50),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CalendarToday, null, tint = Blue700, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("今日班次：$label", fontWeight = FontWeight.Bold, color = Blue700)
+                                Spacer(modifier = Modifier.weight(1f))
+                                TextButton(onClick = {
+                                    val intent = Intent(context, ShiftSelectionActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(intent)
+                                }) {
+                                    Text("切换", color = Blue700, fontSize = 13.sp)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("$startIcon 上班 $startTime    $endIcon 下班 $endTime",
+                                fontSize = 14.sp, color = Gray800)
+                        }
+                    }
+                }
             }
 
             item {
