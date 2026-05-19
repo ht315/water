@@ -14,9 +14,18 @@ class ScreenUnlockReceiver : BroadcastReceiver() {
         if (!prefs.isAttendanceModuleEnabled()) return
         if (prefs.isTodayShiftSelected()) return
 
+        // Prevent duplicate starts from manifest + programmatic registration
+        val now = System.currentTimeMillis()
+        if (now - lastStartTime < 2000) return
+        lastStartTime = now
+
         val activityIntent = Intent(context, ShiftSelectionActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
         context.startActivity(activityIntent)
+    }
+
+    companion object {
+        private var lastStartTime = 0L
     }
 }
