@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
+import com.drinkwater.reminder.service.WeComNotificationListener
 import com.drinkwater.reminder.util.AttendanceReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,6 +31,7 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
     var fullEnd by remember { mutableStateOf(prefs.getAttendanceFullEndTime()) }
     var vibrate by remember { mutableStateOf(prefs.isAttendanceVibrateEnabled()) }
     var popup by remember { mutableStateOf(prefs.isAttendancePopupEnabled()) }
+    var wecomAuto by remember { mutableStateOf(prefs.isWeComAutoDetectEnabled()) }
 
     var showPicker by remember { mutableStateOf("") }
 
@@ -141,6 +143,35 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
                             onCheckedChange = {
                                 popup = it
                                 prefs.setAttendancePopupEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = White,
+                                checkedTrackColor = Blue700
+                            )
+                        )
+                    }
+                )
+                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.Business,
+                    title = "企业微信自动打卡",
+                    subtitle = if (wecomAuto) {
+                        if (WeComNotificationListener.isEnabled(context)) "已开启" else "需授权通知读取权限"
+                    } else "已关闭",
+                    onClick = {
+                        if (wecomAuto && !WeComNotificationListener.isEnabled(context)) {
+                            WeComNotificationListener.openSettings(context)
+                        }
+                    },
+                    trailing = {
+                        Switch(
+                            checked = wecomAuto,
+                            onCheckedChange = {
+                                wecomAuto = it
+                                prefs.setWeComAutoDetectEnabled(it)
+                                if (it && !WeComNotificationListener.isEnabled(context)) {
+                                    WeComNotificationListener.openSettings(context)
+                                }
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = White,
