@@ -21,15 +21,25 @@ class AttendanceAlarmReceiver : BroadcastReceiver() {
 
         // Pre-reminder: open WeChat Work directly
         if (isPre) {
+            // Show notification so user knows alarm fired
+            NotificationHelper.sendAttendanceReminder(context, "即将打卡", true)
             if (!prefs.isAttendanceStartDone()) {
-                try {
-                    val wecom = context.packageManager.getLaunchIntentForPackage("com.tencent.wework")
-                    if (wecom != null) { wecom.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(wecom); return }
-                } catch (_: Exception) {}
-                try {
-                    val dt = context.packageManager.getLaunchIntentForPackage("com.alibaba.android.rimet")
-                    if (dt != null) { dt.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); context.startActivity(dt); return }
-                } catch (_: Exception) {}
+                var opened = false
+                val pkgs = listOf("com.tencent.wework", "com.tencent.wework.local", "com.alibaba.android.rimet")
+                for (pkg in pkgs) {
+                    try {
+                        val intent = context.packageManager.getLaunchIntentForPackage(pkg)
+                        if (intent != null) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+                            opened = true
+                            break
+                        }
+                    } catch (_: Exception) {}
+                }
+                if (!opened) {
+                    android.widget.Toast.makeText(context, "未找到企业微信/钉钉", android.widget.Toast.LENGTH_LONG).show()
+                }
             }
             return
         }
