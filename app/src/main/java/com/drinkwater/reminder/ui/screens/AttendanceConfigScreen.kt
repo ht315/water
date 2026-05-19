@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
@@ -123,27 +124,45 @@ fun AttendanceConfigScreen(onNavigateBack: () -> Unit) {
     }
 
     if (showMorningPicker) {
-        TimePickerDialog("早班提醒时间", morningTime, { showMorningPicker = false }, minuteStep = 5) {
-            morningTime = it
-            prefs.setAttendanceMorningTime(it)
-            AttendanceReminderScheduler.scheduleIfNeeded(context)
-            showMorningPicker = false
-        }
+        TimePickerDialog(
+            title = "早班提醒时间",
+            currentTime = morningTime,
+            onDismiss = { showMorningPicker = false },
+            minuteStep = 5,
+            onSelect = {
+                morningTime = it
+                prefs.setAttendanceMorningTime(it)
+                AttendanceReminderScheduler.scheduleIfNeeded(context)
+                showMorningPicker = false
+            }
+        )
     }
     if (showNightPicker) {
-        TimePickerDialog("晚班提醒时间", nightTime, { showNightPicker = false }, minuteStep = 5) {
-            nightTime = it
-            prefs.setAttendanceNightTime(it)
-            AttendanceReminderScheduler.scheduleIfNeeded(context)
-            showNightPicker = false
-        }
+        TimePickerDialog(
+            title = "晚班提醒时间",
+            currentTime = nightTime,
+            onDismiss = { showNightPicker = false },
+            minuteStep = 5,
+            onSelect = {
+                nightTime = it
+                prefs.setAttendanceNightTime(it)
+                AttendanceReminderScheduler.scheduleIfNeeded(context)
+                showNightPicker = false
+            }
+        )
     }
     if (showFullPicker) {
-        TimePickerDialog("通班提醒时间", fullTime, { showFullPicker = false }, minuteStep = 5) {
-            fullTime = it
-            prefs.setAttendanceFullTime(it)
-            AttendanceReminderScheduler.scheduleIfNeeded(context)
-            showFullPicker = false
-        }
+        TimePickerDialog(
+            title = "通班提醒时间",
+            currentTime = fullTime,
+            onDismiss = { showFullPicker = false },
+            minuteStep = 5,
+            onSelect = {
+                fullTime = it
+                prefs.setAttendanceFullTime(it)
+                AttendanceReminderScheduler.scheduleIfNeeded(context)
+                showFullPicker = false
+            }
+        )
     }
 }

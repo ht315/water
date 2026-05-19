@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.components.*
 import com.drinkwater.reminder.ui.theme.*
@@ -149,20 +150,32 @@ fun BedtimeConfigScreen(onNavigateBack: () -> Unit) {
     }
 
     if (showBedtimePicker) {
-        TimePickerDialog("睡觉时间", bedtime, { showBedtimePicker = false }, minuteStep = 5) {
-            bedtime = it
-            prefs.setBedtimeTime(it)
-            BedtimeReminderScheduler.schedule(context)
-            showBedtimePicker = false
-        }
+        TimePickerDialog(
+            title = "睡觉时间",
+            currentTime = bedtime,
+            onDismiss = { showBedtimePicker = false },
+            minuteStep = 5,
+            onSelect = {
+                bedtime = it
+                prefs.setBedtimeTime(it)
+                BedtimeReminderScheduler.schedule(context)
+                showBedtimePicker = false
+            }
+        )
     }
     if (showWakeUpPicker) {
-        TimePickerDialog("起床时间", wakeUp, { showWakeUpPicker = false }, minuteStep = 5) {
-            wakeUp = it
-            prefs.setBedtimeWakeUpTime(it)
-            BedtimeReminderScheduler.schedule(context)
-            showWakeUpPicker = false
-        }
+        TimePickerDialog(
+            title = "起床时间",
+            currentTime = wakeUp,
+            onDismiss = { showWakeUpPicker = false },
+            minuteStep = 5,
+            onSelect = {
+                wakeUp = it
+                prefs.setBedtimeWakeUpTime(it)
+                BedtimeReminderScheduler.schedule(context)
+                showWakeUpPicker = false
+            }
+        )
     }
     if (showAdvancePicker) {
         val options = listOf(0, 5, 10, 15, 30)

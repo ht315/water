@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -86,7 +85,7 @@ class ShiftSelectionActivity : ComponentActivity() {
                         TextButton(onClick = {
                             if (!selected) finish()
                         }) {
-                            Text("暂不选择", color = Gray500)
+                            Text("暂不选择", color = Gray600)
                         }
                     }
                 }

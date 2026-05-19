@@ -119,19 +119,29 @@ fun SedentaryConfigScreen(onNavigateBack: () -> Unit) {
         )
     }
     if (showStartPicker) {
-        TimePickerDialog("开始时间", startTime, { showStartPicker = false }) {
-            startTime = it
-            prefs.setSedentaryStart(it)
-            SedentaryReminderScheduler.schedule(context)
-            showStartPicker = false
-        }
+        TimePickerDialog(
+            title = "开始时间",
+            currentTime = startTime,
+            onDismiss = { showStartPicker = false },
+            onSelect = {
+                startTime = it
+                prefs.setSedentaryStart(it)
+                SedentaryReminderScheduler.schedule(context)
+                showStartPicker = false
+            }
+        )
     }
     if (showEndPicker) {
-        TimePickerDialog("结束时间", endTime, { showEndPicker = false }) {
-            endTime = it
-            prefs.setSedentaryEnd(it)
-            SedentaryReminderScheduler.schedule(context)
-            showEndPicker = false
-        }
+        TimePickerDialog(
+            title = "结束时间",
+            currentTime = endTime,
+            onDismiss = { showEndPicker = false },
+            onSelect = {
+                endTime = it
+                prefs.setSedentaryEnd(it)
+                SedentaryReminderScheduler.schedule(context)
+                showEndPicker = false
+            }
+        )
     }
 }

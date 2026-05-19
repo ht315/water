@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +29,6 @@ fun CustomReminderEditScreen(
     val prefs = remember { PreferencesManager(context) }
     val isNew = reminderId < 0
 
-    // Determine actual id for new reminders
     var actualId by remember {
         mutableIntStateOf(if (isNew) prefs.getCustomReminderCount() else reminderId)
     }
@@ -80,7 +80,7 @@ fun CustomReminderEditScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Label, contentDescription = null, tint = Blue700, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(12.dp))
@@ -199,10 +199,16 @@ fun CustomReminderEditScreen(
         }
 
         if (showTimePicker) {
-            TimePickerDialog("提醒时间", time, { showTimePicker = false }, minuteStep = 5) {
-                time = it
-                showTimePicker = false
-            }
+            TimePickerDialog(
+                title = "提醒时间",
+                currentTime = time,
+                onDismiss = { showTimePicker = false },
+                minuteStep = 5,
+                onSelect = {
+                    time = it
+                    showTimePicker = false
+                }
+            )
         }
 
         if (showRepeatPicker) {
