@@ -3,9 +3,8 @@ package com.drinkwater.reminder.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
-import com.drinkwater.reminder.DrinkWaterApp
 import com.drinkwater.reminder.MainActivity
 import com.drinkwater.reminder.R
 import com.drinkwater.reminder.data.PreferencesManager
@@ -14,24 +13,18 @@ import com.drinkwater.reminder.util.*
 class ReminderGuardService : Service() {
 
     private val handler = android.os.Handler(mainLooper)
-    private lateinit var checkRunnable: Runnable
+    private var started = false
 
     override fun onCreate() {
         super.onCreate()
-        try {
-            startForegroundNotification()
-            startPeriodicCheck()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            stopSelf()
-        }
+        ensureChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        try {
-            startForegroundNotification()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        if (!started) {
+            startForeground()
+            startPeriodicCheck()
+            started = true
         }
         return START_STICKY
     }
@@ -39,55 +32,61 @@ class ReminderGuardService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        handler.removeCallbacks(checkRunnable)
+        handler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }
 
-    private fun startPeriodicCheck() {
-        checkRunnable = object : Runnable {
-            override fun run() {
-                val prefs = PreferencesManager(this@ReminderGuardService)
-                val ctx = this@ReminderGuardService
-
-                // Re-schedule all enabled modules every 30 minutes
-                if (prefs.isAttendanceModuleEnabled()) {
-                    AttendanceReminderScheduler.scheduleIfNeeded(ctx)
-                }
-                if (prefs.isSedentaryModuleEnabled()) {
-                    SedentaryReminderScheduler.schedule(ctx)
-                }
-                if (prefs.isBedtimeModuleEnabled()) {
-                    BedtimeReminderScheduler.schedule(ctx)
-                }
-                CustomReminderScheduler.scheduleAll(ctx)
-
-                // Also refresh water reminder
-                WaterReminderScheduler.schedule(ctx, prefs.getReminderIntervalMinutes())
-
-                handler.postDelayed(this, 30 * 60 * 1000)
+    private fun ensureChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(NotificationManager::class.java)
+            val ch = NotificationChannel("guard_channel", "后台保护", NotificationManager.IMPORTANCE_MIN).apply {
+                description = "确保提醒准时触发"
+                setSound(null, null)
+                enableVibration(false)
             }
+            nm.createNotificationChannel(ch)
         }
-        handler.post(checkRunnable)
     }
 
-    private fun startForegroundNotification() {
+    private fun startForeground() {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val n = NotificationCompat.Builder(this, DrinkWaterApp.CHANNEL_ID)
+        val n = Notification.Builder(this, "guard_channel")
             .setSmallIcon(R.drawable.ic_water_drop)
             .setContentTitle("提醒助手保护中")
             .setContentText("确保提醒准时触发")
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setSilent(true)
             .setOngoing(true)
             .setContentIntent(pi)
             .build()
         startForeground(9001, n)
     }
 
+    private fun startPeriodicCheck() {
+        val runnable = object : Runnable {
+            override fun run() {
+                try {
+                    val prefs = PreferencesManager(this@ReminderGuardService)
+                    val ctx = this@ReminderGuardService
+                    WaterReminderScheduler.schedule(ctx, prefs.getReminderIntervalMinutes())
+                    if (prefs.isAttendanceModuleEnabled()) AttendanceReminderScheduler.scheduleIfNeeded(ctx)
+                    if (prefs.isSedentaryModuleEnabled()) SedentaryReminderScheduler.schedule(ctx)
+                    if (prefs.isBedtimeModuleEnabled()) BedtimeReminderScheduler.schedule(ctx)
+                    CustomReminderScheduler.scheduleAll(ctx)
+                } catch (_: Exception) {}
+                handler.postDelayed(this, 30 * 60 * 1000)
+            }
+        }
+        handler.post(runnable)
+    }
+
     companion object {
         fun start(context: Context) {
-            context.startForegroundService(Intent(context, ReminderGuardService::class.java))
+            val intent = Intent(context, ReminderGuardService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
         fun stop(context: Context) {
             context.stopService(Intent(context, ReminderGuardService::class.java))
