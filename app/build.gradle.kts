@@ -20,8 +20,8 @@ android {
         applicationId = "com.drinkwater.reminder"
         minSdk = 26
         targetSdk = 34
-        versionCode = 14
-        versionName = "1.14"
+        versionCode = (System.getenv("BUILD_NUM") ?: "1").toInt()
+        versionName = "1.${System.getenv("BUILD_NUM") ?: "1"}"
     }
 
     buildTypes {
