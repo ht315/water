@@ -56,58 +56,49 @@ object UpdateHelper {
     fun downloadAndInstall(context: Context, url: String, fileName: String) {
         runOnUiThread { Toast.makeText(context, "开始下载...", Toast.LENGTH_SHORT).show() }
         Thread {
-            try {
-                val file = File(context.cacheDir, fileName)
-                file.delete()
-                runOnUiThread { Toast.makeText(context, "连接服务器...", Toast.LENGTH_SHORT).show() }
+            // Try direct first, then proxy
+            val urls = listOf(url, "https://ghproxy.com/$url")
+            for ((i, tryUrl) in urls.withIndex()) {
+                if (i > 0) runOnUiThread { Toast.makeText(context, "直连失败，切换镜像...", Toast.LENGTH_SHORT).show() }
+                if (tryDownload(context, tryUrl, fileName)) return@Thread
+            }
+            runOnUiThread { Toast.makeText(context, "下载失败，请检查网络", Toast.LENGTH_LONG).show() }
+        }.start()
+    }
 
-                val conn = URL(url).openConnection() as HttpURLConnection
-                conn.connectTimeout = 30000; conn.readTimeout = 30000
-                conn.setRequestProperty("Accept", "application/octet-stream")
-                conn.setRequestProperty("User-Agent", "DrinkWaterApp")
-                conn.connect()
+    private fun tryDownload(context: Context, url: String, fileName: String): Boolean {
+        return try {
+            val file = File(context.cacheDir, fileName)
+            file.delete()
 
-                if (conn.responseCode != 200) {
-                    val msg = "服务器错误: HTTP ${conn.responseCode}"
-                    conn.disconnect()
-                    runOnUiThread { Toast.makeText(context, msg, Toast.LENGTH_LONG).show() }
-                    return@Thread
-                }
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10000; conn.readTimeout = 15000
+            conn.setRequestProperty("Accept", "application/octet-stream")
+            conn.setRequestProperty("User-Agent", "DrinkWaterApp")
+            conn.connect()
 
-                val total = conn.contentLength
-                if (total <= 0) {
-                    conn.disconnect()
-                    runOnUiThread { Toast.makeText(context, "文件大小为0，下载地址可能无效", Toast.LENGTH_LONG).show() }
-                    return@Thread
-                }
+            if (conn.responseCode != 200) { conn.disconnect(); return false }
+            if (conn.contentLength <= 0) { conn.disconnect(); return false }
 
-                conn.inputStream.use { input ->
-                    file.outputStream().use { output ->
-                        val buffer = ByteArray(8192)
-                        var downloaded = 0L
-                        var bytes: Int
-                        while (input.read(buffer).also { bytes = it } != -1) {
-                            output.write(buffer, 0, bytes)
-                            downloaded += bytes
-                        }
+            conn.inputStream.use { input ->
+                file.outputStream().use { output ->
+                    val buffer = ByteArray(8192)
+                    var bytes: Int
+                    while (input.read(buffer).also { bytes = it } != -1) {
+                        output.write(buffer, 0, bytes)
                     }
                 }
-                conn.disconnect()
+            }
+            conn.disconnect()
 
-                if (file.length() == 0L) {
-                    runOnUiThread { Toast.makeText(context, "下载文件为空", Toast.LENGTH_LONG).show() }
-                    return@Thread
-                }
-
+            if (file.length() > 0) {
                 runOnUiThread {
                     Toast.makeText(context, "下载完成，正在安装...", Toast.LENGTH_SHORT).show()
                     installApk(context, file)
                 }
-            } catch (e: Exception) {
-                val msg = e.message ?: e.javaClass.simpleName
-                runOnUiThread { Toast.makeText(context, "失败: $msg", Toast.LENGTH_LONG).show() }
-            }
-        }.start()
+                true
+            } else false
+        } catch (e: Exception) { false }
     }
 
     private fun runOnUiThread(action: () -> Unit) {
