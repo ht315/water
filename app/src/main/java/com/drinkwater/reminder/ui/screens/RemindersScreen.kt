@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.service.AttendanceWatcherService
 import com.drinkwater.reminder.ui.components.SectionTitle
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.*
@@ -73,8 +74,10 @@ fun RemindersScreen(
                         prefs.setAttendanceModuleEnabled(it)
                         if (it) {
                             AttendanceReminderScheduler.scheduleIfNeeded(context)
+                            AttendanceWatcherService.start(context)
                         } else {
                             AttendanceReminderScheduler.cancelAll(context)
+                            AttendanceWatcherService.stop(context)
                         }
                     },
                     onClick = onNavigateToAttendanceConfig

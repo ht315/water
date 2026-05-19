@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import androidx.core.content.ContextCompat
 import com.drinkwater.reminder.data.PreferencesManager
+import com.drinkwater.reminder.service.AttendanceWatcherService
 import com.drinkwater.reminder.service.FloatingWindowService
 import com.drinkwater.reminder.ui.screens.ShiftSelectionActivity
 import com.drinkwater.reminder.util.*
@@ -28,6 +29,7 @@ class BootReceiver : BroadcastReceiver() {
         // Restart attendance
         if (prefs.isAttendanceModuleEnabled()) {
             AttendanceReminderScheduler.scheduleIfNeeded(context)
+            AttendanceWatcherService.start(context)
         }
 
         // Restart sedentary
