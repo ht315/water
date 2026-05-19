@@ -39,7 +39,7 @@ class ReminderGuardService : Service() {
                 val prefs = PreferencesManager(this@ReminderGuardService)
                 val ctx = this@ReminderGuardService
 
-                // Re-schedule all enabled modules every 5 minutes
+                // Re-schedule all enabled modules every 30 minutes
                 if (prefs.isAttendanceModuleEnabled()) {
                     AttendanceReminderScheduler.scheduleIfNeeded(ctx)
                 }
@@ -54,7 +54,7 @@ class ReminderGuardService : Service() {
                 // Also refresh water reminder
                 WaterReminderScheduler.schedule(ctx, prefs.getReminderIntervalMinutes())
 
-                handler.postDelayed(this, 5 * 60 * 1000)
+                handler.postDelayed(this, 30 * 60 * 1000)
             }
         }
         handler.post(checkRunnable)
