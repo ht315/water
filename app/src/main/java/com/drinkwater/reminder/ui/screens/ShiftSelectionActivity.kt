@@ -185,6 +185,32 @@ class ShiftSelectionActivity : ComponentActivity() {
         prefs.setTodayShift(shift)
         prefs.setTodayShiftDate(today)
         AttendanceReminderScheduler.scheduleIfNeeded(this)
+
+        // Show what was set
+        val label = when (shift) {
+            "morning" -> "早班"
+            "night" -> "晚班"
+            "full" -> "通班"
+            else -> ""
+        }
+        val startTime = when (shift) {
+            "morning" -> prefs.getAttendanceMorningTime()
+            "night" -> prefs.getAttendanceNightTime()
+            "full" -> prefs.getAttendanceFullTime()
+            else -> ""
+        }
+        val endTime = when (shift) {
+            "morning" -> prefs.getAttendanceMorningEndTime()
+            "night" -> prefs.getAttendanceNightEndTime()
+            "full" -> prefs.getAttendanceFullEndTime()
+            else -> ""
+        }
+        val msg = if (shift == "rest") "今天休息，不设打卡提醒"
+        else "$label：上班 $startTime / 下班 $endTime"
+
+        if (msg.isNotEmpty()) {
+            android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
+        }
         finish()
     }
 
