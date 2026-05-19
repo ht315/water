@@ -118,6 +118,50 @@ object NotificationHelper {
         notify(context, 5002, n)
     }
 
+    fun showAttendanceStatus(context: Context, label: String, startTime: String, endTime: String,
+                              startDone: Boolean, endDone: Boolean) {
+        if (!checkPermission(context)) return
+        val pi = PendingIntent.getActivity(context, 0,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        val startIcon = if (startDone) "✅" else "⏳"
+        val endIcon = if (endDone) "✅" else "⏳"
+
+        // Start action
+        val startIntent = Intent(context, com.drinkwater.reminder.receiver.AttendanceActionReceiver::class.java).apply {
+            action = "com.drinkwater.ACTION_START_DONE"
+        }
+        val startPi = PendingIntent.getBroadcast(context, 3010, startIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        // End action
+        val endIntent = Intent(context, com.drinkwater.reminder.receiver.AttendanceActionReceiver::class.java).apply {
+            action = "com.drinkwater.ACTION_END_DONE"
+        }
+        val endPi = PendingIntent.getBroadcast(context, 3011, endIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+        val n = NotificationCompat.Builder(context, DrinkWaterApp.ATTENDANCE_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_water_drop)
+            .setContentTitle("今日$label")
+            .setContentText("$startIcon 上班 $startTime    $endIcon 下班 $endTime")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setOngoing(true)
+            .setContentIntent(pi)
+            .setSilent(true)
+            .addAction(0, if (startDone) "上班✅" else "上班打卡", startPi)
+            .addAction(0, if (endDone) "下班✅" else "下班打卡", endPi)
+            .build()
+        notify(context, 3009, n)
+    }
+
+    fun cancelAttendanceStatus(context: Context) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.cancel(3009)
+    }
+
     fun sendCustomReminder(context: Context, label: String, vibrateEnabled: Boolean) {
         if (!checkPermission(context)) return
         val n = buildBase(context, DrinkWaterApp.CUSTOM_CHANNEL_ID,

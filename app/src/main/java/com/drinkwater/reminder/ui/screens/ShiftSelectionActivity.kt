@@ -35,6 +35,7 @@ import androidx.core.content.ContextCompat
 import com.drinkwater.reminder.data.PreferencesManager
 import com.drinkwater.reminder.ui.theme.*
 import com.drinkwater.reminder.util.AttendanceReminderScheduler
+import com.drinkwater.reminder.util.NotificationHelper
 import com.drinkwater.reminder.util.HourlyPrecip
 import com.drinkwater.reminder.util.WeatherHelper
 import com.drinkwater.reminder.util.WeatherInfo
@@ -185,6 +186,15 @@ class ShiftSelectionActivity : ComponentActivity() {
         prefs.setTodayShift(shift)
         prefs.setTodayShiftDate(today)
         AttendanceReminderScheduler.scheduleIfNeeded(this)
+
+        // Show persistent status notification
+        if (shift != "rest" && startTime.isNotEmpty() && endTime.isNotEmpty()) {
+            prefs.setAttendanceStartDone(false)
+            prefs.setAttendanceEndDone(false)
+            NotificationHelper.showAttendanceStatus(this, label, startTime, endTime, false, false)
+        } else if (shift == "rest") {
+            NotificationHelper.cancelAttendanceStatus(this)
+        }
 
         // Show what was set
         val label = when (shift) {

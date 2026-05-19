@@ -116,6 +116,18 @@ class PreferencesManager(context: Context) {
     fun getAttendanceCity(): String = prefs.getString(KEY_ATTENDANCE_CITY, "北京") ?: "北京"
     fun setAttendanceCity(city: String) = prefs.edit().putString(KEY_ATTENDANCE_CITY, city).apply()
 
+    fun isAttendanceStartDone(): Boolean {
+        if (getTodayShiftDate() != todayKey()) { setAttendanceStartDone(false); setAttendanceEndDone(false) }
+        return prefs.getBoolean(KEY_ATTENDANCE_START_DONE, false)
+    }
+    fun setAttendanceStartDone(done: Boolean) = prefs.edit().putBoolean(KEY_ATTENDANCE_START_DONE, done).apply()
+
+    fun isAttendanceEndDone(): Boolean {
+        if (getTodayShiftDate() != todayKey()) { setAttendanceStartDone(false); setAttendanceEndDone(false) }
+        return prefs.getBoolean(KEY_ATTENDANCE_END_DONE, false)
+    }
+    fun setAttendanceEndDone(done: Boolean) = prefs.edit().putBoolean(KEY_ATTENDANCE_END_DONE, done).apply()
+
     // --- Sedentary ---
     fun getSedentaryInterval(): Int = prefs.getInt(KEY_SEDENTARY_INTERVAL, 45)
     fun setSedentaryInterval(minutes: Int) = prefs.edit().putInt(KEY_SEDENTARY_INTERVAL, minutes).apply()
@@ -232,6 +244,8 @@ class PreferencesManager(context: Context) {
         private const val KEY_ATTENDANCE_FULL_END_TIME = "attendance_full_end_time"
         private const val KEY_ATTENDANCE_VIBRATE = "attendance_vibrate"
         private const val KEY_ATTENDANCE_CITY = "attendance_city"
+        private const val KEY_ATTENDANCE_START_DONE = "attendance_start_done"
+        private const val KEY_ATTENDANCE_END_DONE = "attendance_end_done"
 
         private const val KEY_SEDENTARY_INTERVAL = "sedentary_interval"
         private const val KEY_SEDENTARY_START = "sedentary_start"
